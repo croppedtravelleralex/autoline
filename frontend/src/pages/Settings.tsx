@@ -64,12 +64,12 @@ export const Settings: React.FC = () => {
     const handleExport = async (type: 'temperature' | 'vacuum') => {
         const start = exportRange.start || new Date(Date.now() - 24 * 3600 * 1000).toISOString();
         const end = exportRange.end || new Date().toISOString();
-        window.open(`http://127.0.0.1:8001/api/data/export?type=${type}&start=${start}&end=${end}`, '_blank');
+        window.open(`/api/data/export?type=${type}&start=${start}&end=${end}`, '_blank');
     };
 
     const handleBackup = async () => {
         try {
-            const res = await fetch('http://127.0.0.1:8001/api/data/backup', { method: 'POST' });
+            const res = await fetch('/api/data/backup', { method: 'POST' });
             if (res.ok) alert("备份成功");
             else alert("备份失败");
         } catch (e) {
@@ -429,14 +429,14 @@ export const Settings: React.FC = () => {
 
                             <div className="grid grid-cols-2 gap-4 mb-6">
                                 <button
-                                    onClick={() => fetch('http://127.0.0.1:8001/api/simulation/fault?type=temp_runaway&line_id=line-1&chamber_id=a-hk-101', { method: 'POST' })}
+                                    onClick={() => fetch('/api/simulation/fault?type=temp_runaway&line_id=line-1&chamber_id=a-hk-101', { method: 'POST' })}
                                     className="p-3 bg-red-500/10 border border-red-500/30 hover:bg-red-500/20 rounded flex items-center justify-center gap-2 text-red-400 transition-colors"
                                 >
                                     <AlertTriangle size={18} />
                                     <span>触发：阳极高温失控</span>
                                 </button>
                                 <button
-                                    onClick={() => fetch('http://127.0.0.1:8001/api/simulation/fault?type=vacuum_leak&line_id=line-1&chamber_id=c-sz-102', { method: 'POST' })}
+                                    onClick={() => fetch('/api/simulation/fault?type=vacuum_leak&line_id=line-1&chamber_id=c-sz-102', { method: 'POST' })}
                                     className="p-3 bg-orange-500/10 border border-orange-500/30 hover:bg-orange-500/20 rounded flex items-center justify-center gap-2 text-orange-400 transition-colors"
                                 >
                                     <AlertTriangle size={18} />
@@ -448,7 +448,7 @@ export const Settings: React.FC = () => {
                                 <div className="flex justify-between items-center mb-2">
                                     <h4 className="text-sm font-bold text-slate-400">当前活跃故障 ({simulationConfig.activeFaults.length})</h4>
                                     <button
-                                        onClick={() => fetch('http://127.0.0.1:8001/api/simulation/faults', { method: 'DELETE' }).then(() => updateSimulationConfig({ ...simulationConfig, activeFaults: [] }))}
+                                        onClick={() => fetch('/api/simulation/faults', { method: 'DELETE' }).then(() => updateSimulationConfig({ ...simulationConfig, activeFaults: [] }))}
                                         className="text-xs px-2 py-1 bg-slate-800 hover:bg-slate-700 rounded text-slate-300 border border-slate-600"
                                     >
                                         清除所有故障

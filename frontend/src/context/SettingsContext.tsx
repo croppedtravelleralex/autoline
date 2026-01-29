@@ -101,7 +101,7 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
             // Try fetching simulation config
             try {
-                const response = await fetch('http://127.0.0.1:8001/api/settings/simulation');
+                const response = await fetch('/api/settings/simulation');
                 if (response.ok) {
                     const simData = await response.json();
                     setSimulationConfig(simData);
@@ -142,7 +142,7 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
     const updateSimulationConfig = async (config: SimulationConfig) => {
         try {
-            const response = await fetch('http://127.0.0.1:8001/api/settings/simulation', {
+            const response = await fetch('/api/settings/simulation', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(config)

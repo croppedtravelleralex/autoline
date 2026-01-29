@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { User as UserIcon, Shield, Trash2, Edit, Plus, X } from 'lucide-react';
 import { useUser, type UserRole, type User } from '../context/UserContext';
 
-const API_THREAD = 'http://127.0.0.1:8001/api';
+const API_THREAD = '/api';
 
 export function UserManagement() {
     const { user, checkPermission } = useUser();

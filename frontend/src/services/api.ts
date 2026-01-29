@@ -1,6 +1,6 @@
 import type { SystemState } from '../types';
 
-const API_BASE = 'http://127.0.0.1:8001/api';
+const API_BASE = '/api';
 
 export const fetchSystemState = async (): Promise<SystemState> => {
     try {
