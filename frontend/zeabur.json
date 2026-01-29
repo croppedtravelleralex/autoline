@@ -1,8 +1,7 @@
 {
     "build": {
-        "command": "npm install && npm run build"
-    },
-    "static": {
-        "directory": "dist"
+        "type": "static",
+        "command": "npm install --legacy-peer-deps && npm run build",
+        "output": "dist"
     }
 }
