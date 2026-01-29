@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd';
+import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
 import { ArrowLeft, Plus, Trash2, GripVertical, Save, X } from 'lucide-react';
 import { useSystemStateContext } from '../context/SystemStateContext';
 import { updateLine } from '../services/api';
