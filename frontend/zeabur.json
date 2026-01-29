@@ -1,7 +1,8 @@
 {
     "build": {
-        "type": "static",
-        "command": "npm install && npm run build",
-        "output": "dist"
+        "command": "npm install && npm run build"
+    },
+    "static": {
+        "directory": "dist"
     }
 }
