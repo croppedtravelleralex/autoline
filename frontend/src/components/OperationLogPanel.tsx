@@ -21,16 +21,17 @@ export const OperationLogPanel = ({ logs, lines, className }: OperationLogPanelP
     // and for specific lines, we (optionally) try to filter or just show a placeholder if no keyword matches.
     // A simple heuristic: if log content contains line name or chamber name belonging to the line.
 
-    const filteredLogs = logs.filter(log => {
+    const filteredLogs = (logs || []).filter(log => {
+        if (!log) return false;
         if (activeLineId === 'all') return true;
-        const line = lines.find(l => l.id === activeLineId);
+        const line = (lines || []).find(l => l.id === activeLineId);
         if (!line) return false;
 
         const lineIndex = lines.indexOf(line) + 1;
         const targetFlag = `${lineIndex}#`;
 
         // 检查日志是否包含任何产线标识（如 1#, 2# 等）
-        const allFlags = lines.map((_, idx) => `${idx + 1}#`);
+        const allFlags = (lines || []).map((_, idx) => `${idx + 1}#`);
         const hasAnyFlag = allFlags.some(flag => log.content.includes(flag));
 
         if (hasAnyFlag) {
@@ -40,7 +41,7 @@ export const OperationLogPanel = ({ logs, lines, className }: OperationLogPanelP
 
         // 如果日志中完全没有编号标识（如系统级日志或旧数据），则回退到按腔体名称匹配
         const allChambers = [...(line.anodeChambers || []), ...(line.cathodeChambers || [])];
-        const hasChamberName = allChambers.some(c => log.content.includes(c.name));
+        const hasChamberName = allChambers.some(c => c && log.content.includes(c.name));
         return hasChamberName;
     });
 

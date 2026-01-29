@@ -42,8 +42,9 @@ export function SystemStateProvider({ children }: { children: ReactNode }) {
 
     const state = {
         ...realState,
-        lines: realState.lines.map(line => {
-            const snap = playbackSnapshots[line.id];
+        lines: (realState?.lines || []).map(line => {
+            if (!line) return line;
+            const snap = playbackSnapshots?.[line.id];
             // 如果这条线体没有快照，使用实时数据
             if (!snap) return line;
 
@@ -65,25 +66,32 @@ export function SystemStateProvider({ children }: { children: ReactNode }) {
         carts: (() => {
             const allCarts: Cart[] = [];
             // 1. Add historical carts from playback lines
-            Object.values(playbackSnapshots).forEach(snap => {
-                if (!snap.isMissing) {
-                    allCarts.push(...snap.carts);
-                }
-            });
-            // 2. Add real-time carts for lines NOT in playback
-            realState.carts.forEach(cart => {
-                const findLineForChamber = (chamberId: string) => {
-                    for (const l of realState.lines) {
-                        if ([...(l.anodeChambers || []), ...(l.cathodeChambers || [])].some(c => c.id === chamberId)) return l.id;
+            if (playbackSnapshots) {
+                Object.values(playbackSnapshots).forEach(snap => {
+                    if (snap && !snap.isMissing && Array.isArray(snap.carts)) {
+                        allCarts.push(...snap.carts);
                     }
-                    return null;
-                };
-                const lineId = findLineForChamber(cart.locationChamberId);
-                // 只有当这条线体不在回放中时才添加实时小车
-                if (!lineId || !playbackSnapshots[lineId]) {
-                    allCarts.push(cart);
-                }
-            });
+                });
+            }
+            // 2. Add real-time carts for lines NOT in playback
+            if (Array.isArray(realState?.carts)) {
+                realState.carts.forEach(cart => {
+                    if (!cart) return;
+                    const findLineForChamber = (chamberId: string) => {
+                        if (!Array.isArray(realState?.lines)) return null;
+                        for (const l of realState.lines) {
+                            if (!l) continue;
+                            if ([...(l.anodeChambers || []), ...(l.cathodeChambers || [])].some(c => c && c.id === chamberId)) return l.id;
+                        }
+                        return null;
+                    };
+                    const lineId = findLineForChamber(cart.locationChamberId);
+                    // 只有当这条线体不在回放中时才添加实时小车
+                    if (!lineId || !playbackSnapshots?.[lineId]) {
+                        allCarts.push(cart);
+                    }
+                });
+            }
             return allCarts;
         })()
     };
@@ -91,8 +99,12 @@ export function SystemStateProvider({ children }: { children: ReactNode }) {
     const refreshState = useCallback(async () => {
         try {
             const newState = await fetchSystemState();
-            setRealState(newState);
-            setError(null);
+            if (newState && typeof newState === 'object') {
+                setRealState(newState);
+                setError(null);
+            } else {
+                console.warn("Received invalid state from server:", newState);
+            }
         } catch (err) {
             console.error("Failed to sync state:", err);
             setError("无法连接服务器");

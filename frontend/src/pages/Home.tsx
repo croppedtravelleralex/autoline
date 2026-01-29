@@ -22,7 +22,14 @@ export function Home() {
     const [selectedCart, setSelectedCart] = useState<Cart | null>(null);
     const [selectedChamber, setSelectedChamber] = useState<Chamber | null>(null);
     const [isLineEditorOpen, setIsLineEditorOpen] = useState(false);
-    const [selectedLineId, setSelectedLineId] = useState<string>(state.lines[0]?.id || '');
+    const [selectedLineId, setSelectedLineId] = useState<string>('');
+
+    // 初始化选中 ID
+    useEffect(() => {
+        if (!selectedLineId && state?.lines?.[0]) {
+            setSelectedLineId(state.lines[0].id);
+        }
+    }, [state?.lines, selectedLineId]);
 
     // Dialog State
     const [confirmDialog, setConfirmDialog] = useState<{
@@ -85,9 +92,9 @@ export function Home() {
     // DashboardLogPanel expects LogEntry[]. 
     // We can filter state.systemLogs for specific levels if needed.
     // Derived logs for panels
-    // DashboardLogPanel expects LogEntry[]. 
-    // We can filter state.systemLogs for specific levels if needed.
-    const warningLogs = state.systemLogs.filter(l => l.level === 'warn' || l.level === 'error');
+    const warningLogs = Array.isArray(state?.systemLogs)
+        ? state.systemLogs.filter(l => l && (l.level === 'warn' || l.level === 'error'))
+        : [];
 
     // Handler for Load/Unload click in LineSection
     const handleCartOperation = (lineId: string, chamberId: string, type: 'load' | 'unload') => {
