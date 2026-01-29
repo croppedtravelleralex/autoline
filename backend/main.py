@@ -18,10 +18,10 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(title="AutoLine Monitor API", lifespan=lifespan)
 
-# Allow CORS for frontend
+# Allow CORS for frontend (支持 Zeabur 部署)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173", "http://localhost:5174", "http://127.0.0.1:5173", "http://127.0.0.1:5174"],
+    allow_origins=["*"],  # 生产环境建议使用具体域名
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
