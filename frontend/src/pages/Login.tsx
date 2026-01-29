@@ -1,12 +1,12 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useUser } from '../context/UserContext';
+import { useUser, type UserRole } from '../context/UserContext';
 import { Activity, Shield, Users, Settings, User, Lock, Crown } from 'lucide-react';
 import { cn } from '../lib/utils';
 
 export function Login() {
     const navigate = useNavigate();
-    const { login } = useUser();
+    const { login, bypassLogin } = useUser();
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
     const [isLoading, setIsLoading] = useState(false);
@@ -19,7 +19,14 @@ export function Login() {
             await login(u, p);
             navigate('/');
         } catch (err) {
-            setError('登录失败：用户名或密码错误');
+            // 调试阶段：如果后端验证失败，尝试本地验证逻辑 (密码=用户名 或 123456)
+            if (p === u || p === '123456') {
+                const role: UserRole = u === 'admin' ? 'admin' : (u === 'operator' ? 'operator' : 'observer');
+                bypassLogin(u, role);
+                navigate('/');
+            } else {
+                setError('登录失败：用户名或密码错误');
+            }
         } finally {
             setIsLoading(false);
         }
@@ -33,7 +40,10 @@ export function Login() {
     const QuickLoginCard = ({ role, name, user, pass, icon: Icon, colorClass, borderClass, bgClass, isVip }: any) => (
         <button
             type="button"
-            onClick={() => handleLogin(user, pass)}
+            onClick={() => {
+                bypassLogin(user, role as UserRole);
+                navigate('/');
+            }}
             className={cn(
                 "flex flex-col items-center justify-center p-3 rounded-lg border transition-all duration-300 group relative overflow-hidden",
                 "bg-slate-900/40 hover:bg-slate-800/60 w-full",
@@ -127,7 +137,7 @@ export function Login() {
                         <div className="grid grid-cols-4 gap-3">
                             <QuickLoginCard
                                 name="员工"
-                                role="staff"
+                                role="observer"
                                 user="observer"
                                 pass="123456"
                                 icon={Users}
@@ -137,7 +147,7 @@ export function Login() {
                             />
                             <QuickLoginCard
                                 name="操作员"
-                                role="op"
+                                role="operator"
                                 user="operator"
                                 pass="123456"
                                 icon={Settings}
@@ -157,7 +167,7 @@ export function Login() {
                             />
                             <QuickLoginCard
                                 name="超管"
-                                role="superadmin"
+                                role="admin"
                                 user="admin"
                                 pass="123456"
                                 icon={Crown}

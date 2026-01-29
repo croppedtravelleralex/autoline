@@ -11,6 +11,7 @@ export interface User {
 interface UserContextType {
     user: User | null;
     login: (username: string, password: string) => Promise<void>;
+    bypassLogin: (username: string, role: UserRole) => void;
     logout: () => void;
     isAuthenticated: boolean;
     isAdmin: boolean;
@@ -59,6 +60,16 @@ export function UserProvider({ children }: { children: ReactNode }) {
         }
     };
 
+    const bypassLogin = (username: string, role: UserRole) => {
+        const userData: User = {
+            username,
+            role,
+            token: `mock-token-${Date.now()}`
+        };
+        setUser(userData);
+        localStorage.setItem('user', JSON.stringify(userData));
+    };
+
     const logout = () => {
         setUser(null);
         localStorage.removeItem('user');
@@ -75,6 +86,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
     const value = {
         user,
         login,
+        bypassLogin,
         logout,
         isAuthenticated: !!user,
         isAdmin: user?.role === 'admin',
