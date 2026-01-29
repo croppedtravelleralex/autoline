@@ -1,0 +1,19 @@
+{
+    "cartId": "A001",
+    "station": "A-04",
+    "status": "Running",
+    "recipeVer": "v2.0",
+    "loadTime": "2026-01-18T09:15:00Z",
+    "temperature": 380,
+    "vacuum": 2e-4,
+    "targetTemp": 390,
+    "targetVacuum": 1e-4,
+    "eGunVoltage": 5.0,
+    "eGunCurrent": 300,
+    "indiumTemp": 100,
+    "sealPressure": 1200,
+    "getterStatus": "Pending",
+    "screenBatch": "SCR-260118-B",
+    "indiumBatch": "IND-260120",
+    "getterBatch": "GTR-SAES-01"
+}

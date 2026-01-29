@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <style>
+        html {
+            background: #ffffff;
+        }
+
+        body {
+            width: 720pt;
+            height: 405pt;
+            margin: 0;
+            padding: 0;
+            background: #0F172A;
+            font-family: 'Microsoft YaHei', Arial, sans-serif;
+            color: #F8FAFC;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .content {
+            padding: 40pt 40pt 50pt 40pt;
+            height: 100%;
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .header-wrapper {
+            border-bottom: 2px solid #38BDF8;
+            padding-bottom: 10pt;
+            margin-bottom: 15pt;
+            width: 100%;
+        }
+
+        h1 {
+            color: #38BDF8;
+            font-size: 28pt;
+            margin: 0;
+        }
+
+        .flex-container {
+            display: flex;
+            gap: 30pt;
+            flex: 1;
+            align-items: flex-start;
+        }
+
+        .text-col {
+            flex: 1.2;
+        }
+
+        .visual-col {
+            flex: 0.8;
+            background: #1E293B;
+            border: 1px dashed #475569;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 150pt;
+            border-radius: 8pt;
+            flex-direction: column;
+        }
+
+        ul {
+            padding-left: 20pt;
+            margin: 0;
+        }
+
+        li {
+            font-size: 16pt;
+            line-height: 1.5;
+            margin-bottom: 8pt;
+            color: #E2E8F0;
+        }
+
+        .highlight {
+            color: #10B981;
+            font-weight: bold;
+        }
+
+        p {
+            margin: 0;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="content">
+        <div class="header-wrapper">
+            <h1>项目概况 (Project Overview)</h1>
+        </div>
+        <div class="flex-container">
+            <div class="text-col">
+                <ul>
+                    <li><strong>背景：</strong>微光夜视仪连续生产线</li>
+                    <li><strong>范围：</strong><span class="highlight">阳极线 (Anode)</span> 与 <span class="highlight">阴极线
+                            (Cathode)</span> 全流程真空生产</li>
+                    <li><strong>核心能力：</strong>
+                        <ul>
+                            <li>全流程实时数据采集</li>
+                            <li>远程设备控制</li>
+                            <li>工艺异常互锁保护</li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+            <div class="visual-col">
+                <div style="text-align: center; color: #64748B;">
+                    <p style="font-size: 12pt;">[生产线示意图占位]</p>
+                    <p style="font-size: 40pt; color: #38BDF8;">🏭</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>

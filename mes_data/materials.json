@@ -1,0 +1,18 @@
+[
+    {
+        "materialId": "SUB-001",
+        "type": "Substrate",
+        "batchNumber": "B20260101",
+        "supplier": "OpticGlass Co.",
+        "expiryDate": "2028-12-31",
+        "linkedCartId": "C001"
+    },
+    {
+        "materialId": "CS-001",
+        "type": "Cesium Dispenser",
+        "batchNumber": "CS20260102",
+        "supplier": "SAES",
+        "expiryDate": "2027-06-30",
+        "linkedCartId": "C001"
+    }
+]

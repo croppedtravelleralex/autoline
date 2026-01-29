@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <style>
+        html {
+            background: #ffffff;
+        }
+
+        body {
+            width: 720pt;
+            height: 405pt;
+            margin: 0;
+            padding: 0;
+            background: #0F172A;
+            font-family: 'Microsoft YaHei', Arial, sans-serif;
+            color: #F8FAFC;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .content {
+            padding: 40pt 40pt 50pt 40pt;
+            height: 100%;
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .header-wrapper {
+            border-bottom: 2px solid #38BDF8;
+            padding-bottom: 10pt;
+            margin-bottom: 15pt;
+        }
+
+        h1 {
+            color: #38BDF8;
+            font-size: 28pt;
+            margin: 0;
+        }
+
+        .diagram-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 12pt;
+            justify-content: center;
+        }
+
+        .flow-row {
+            display: flex;
+            align-items: center;
+            gap: 5pt;
+        }
+
+        .label {
+            width: 80pt;
+            font-weight: bold;
+            color: #94A3B8;
+            font-size: 12pt;
+            text-align: right;
+        }
+
+        .step {
+            background: #1E293B;
+            padding: 8pt 10pt;
+            border: 1px solid #334155;
+            border-radius: 4pt;
+            font-size: 10pt;
+            color: #E2E8F0;
+            text-align: center;
+            min-width: 35pt;
+        }
+
+        .step.active {
+            border-color: #10B981;
+            color: #10B981;
+        }
+
+        .arrow {
+            color: #475569;
+            font-size: 12pt;
+            padding: 0 2pt;
+        }
+
+        .logic-box {
+            margin-top: 10pt;
+            background: rgba(56, 189, 248, 0.1);
+            border: 1px solid #38BDF8;
+            padding: 8pt;
+            border-radius: 4pt;
+            text-align: center;
+        }
+
+        .logic-text {
+            color: #38BDF8;
+            font-size: 14pt;
+            font-weight: bold;
+            margin: 0;
+        }
+
+        p {
+            margin: 0;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="content">
+        <div class="header-wrapper">
+            <h1>系统架构与流程 (System Architecture)</h1>
+        </div>
+
+        <div class="diagram-container">
+            <div class="flow-row">
+                <div class="label">
+                    <p>阳极线</p>
+                </div>
+                <div class="step">
+                    <p>进样</p>
+                </div>
+                <div class="arrow">
+                    <p>→</p>
+                </div>
+                <div class="step active">
+                    <p>烘烤</p>
+                </div>
+                <div class="arrow">
+                    <p>→</p>
+                </div>
+                <div class="step">
+                    <p>冷却</p>
+                </div>
+                <div class="arrow">
+                    <p>→</p>
+                </div>
+                <div class="step">
+                    <p>清刷</p>
+                </div>
+                <div class="arrow">
+                    <p>→</p>
+                </div>
+                <div class="step">
+                    <p>对接</p>
+                </div>
+                <div class="arrow">
+                    <p>→</p>
+                </div>
+                <div class="step">
+                    <p>铟封</p>
+                </div>
+                <div class="arrow">
+                    <p>→</p>
+                </div>
+                <div class="step">
+                    <p>出样</p>
+                </div>
+            </div>
+
+            <div class="flow-row">
+                <div class="label">
+                    <p>阴极线</p>
+                </div>
+                <div class="step">
+                    <p>进样</p>
+                </div>
+                <div class="arrow">
+                    <p>→</p>
+                </div>
+                <div class="step active">
+                    <p>烘烤</p>
+                </div>
+                <div class="arrow">
+                    <p>→</p>
+                </div>
+                <div class="step">
+                    <p>生长(激活)</p>
+                </div>
+                <div class="arrow">
+                    <p>→</p>
+                </div>
+                <div class="step">
+                    <p>出样</p>
+                </div>
+            </div>
+
+            <div class="logic-box">
+                <p class="logic-text">安全传输逻辑 = 压差合格 (ΔP < Limit) + 阀门开启 (Valve Open)</p>
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>

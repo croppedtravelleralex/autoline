@@ -1,0 +1,28 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+build/
+
+# IDE
+.vscode/
+.idea/
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# Logs
+*.log
+output.txt
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Large data files
+*.db
+*.db-journal

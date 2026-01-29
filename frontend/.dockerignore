@@ -1,0 +1,14 @@
+# Docker 忽略配置
+node_modules
+dist
+build
+.git
+.gitignore
+*.log
+.env*
+.vscode
+.idea
+coverage
+.DS_Store
+*.md
+!README.md

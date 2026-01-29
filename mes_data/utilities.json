@@ -1,0 +1,11 @@
+{
+    "nitrogenSupply": 500,
+    "nitrogenPressure": 0.55,
+    "purityStatus": "Pass",
+    "pcwFlow": 120,
+    "pcwTempIn": 20.5,
+    "pcwTempOut": 26.0,
+    "pcwPressure": 0.35,
+    "cdaPressure": 0.62,
+    "mainPowerStatus": "On"
+}

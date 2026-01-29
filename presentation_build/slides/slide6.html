@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <style>
+        html {
+            background: #ffffff;
+        }
+
+        body {
+            width: 720pt;
+            height: 405pt;
+            margin: 0;
+            padding: 0;
+            background: #0F172A;
+            font-family: 'Microsoft YaHei', Arial, sans-serif;
+            color: #F8FAFC;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .content {
+            padding: 40pt 40pt 50pt 40pt;
+            height: 100%;
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .header-wrapper {
+            border-bottom: 2px solid #38BDF8;
+            padding-bottom: 10pt;
+            margin-bottom: 15pt;
+        }
+
+        h1 {
+            color: #38BDF8;
+            font-size: 28pt;
+            margin: 0;
+        }
+
+        .grid-container {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15pt;
+            margin-top: 10pt;
+        }
+
+        .spec-box {
+            background: #1E293B;
+            padding: 15pt 10pt;
+            border-radius: 8pt;
+            text-align: center;
+            border: 1px solid #334155;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .val {
+            font-size: 24pt;
+            font-weight: bold;
+            color: #38BDF8;
+            margin-bottom: 5pt;
+        }
+
+        .unit {
+            font-size: 14pt;
+            color: #64748B;
+            font-weight: normal;
+        }
+
+        .desc {
+            color: #94A3B8;
+            font-size: 12pt;
+        }
+
+        p {
+            margin: 0;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="content">
+        <div class="header-wrapper">
+            <h1>关键技术指标 (Technical Specs)</h1>
+        </div>
+        <div class="grid-container">
+            <div class="spec-box">
+                <div class="val">
+                    <p>&lt; 1000<span class="unit">ms</span></p>
+                </div>
+                <div class="desc">
+                    <p>实时状态刷新延迟</p>
+                </div>
+            </div>
+            <div class="spec-box">
+                <div class="val">
+                    <p>Web<span class="unit">Arch</span></p>
+                </div>
+                <div class="desc">
+                    <p>分布式高并发架构</p>
+                </div>
+            </div>
+            <div class="spec-box">
+                <div class="val">
+                    <p>≥ 1<span class="unit">Hz</span></p>
+                </div>
+                <div class="desc">
+                    <p>关键工序采样率</p>
+                </div>
+            </div>
+
+            <!-- Second Row - More details -->
+            <div class="spec-box"
+                style="grid-column: span 3; flex-direction: row; justify-content: space-around; padding: 15pt;">
+                <div style="text-align: left;">
+                    <div style="color: #10B981; font-weight: bold; font-size: 14pt; margin-bottom: 5pt;">
+                        <p>√ 支持格式</p>
+                    </div>
+                    <div style="color: #94A3B8;">
+                        <p>.CSV / .XLSX</p>
+                    </div>
+                </div>
+                <div style="border-right: 1px solid #334155; height: 30pt;"></div>
+                <div style="text-align: left;">
+                    <div style="color: #10B981; font-weight: bold; font-size: 14pt; margin-bottom: 5pt;">
+                        <p>√ 趋势分析</p>
+                    </div>
+                    <div style="color: #94A3B8;">
+                        <p>月度/季度对比</p>
+                    </div>
+                </div>
+                <div style="border-right: 1px solid #334155; height: 30pt;"></div>
+                <div style="text-align: left;">
+                    <div style="color: #10B981; font-weight: bold; font-size: 14pt; margin-bottom: 5pt;">
+                        <p>√ 分布式</p>
+                    </div>
+                    <div style="color: #94A3B8;">
+                        <p>多终端实时同步</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>

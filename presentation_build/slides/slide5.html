@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <style>
+        html {
+            background: #ffffff;
+        }
+
+        body {
+            width: 720pt;
+            height: 405pt;
+            margin: 0;
+            padding: 0;
+            background: #0F172A;
+            font-family: 'Microsoft YaHei', Arial, sans-serif;
+            color: #F8FAFC;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .content {
+            padding: 40pt 40pt 50pt 40pt;
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .header-wrapper {
+            border-bottom: 2px solid #38BDF8;
+            padding-bottom: 10pt;
+            margin-bottom: 15pt;
+        }
+
+        h1 {
+            color: #38BDF8;
+            font-size: 28pt;
+            margin: 0;
+        }
+
+        .list-container {
+            display: flex;
+            flex-direction: column;
+            gap: 15pt;
+            margin-top: 5pt;
+        }
+
+        /* removed flex: 1 if it was there implicitly */
+        .list-item {
+            display: flex;
+            align-items: flex-start;
+            background: #1E293B;
+            padding: 12pt;
+            border-radius: 6pt;
+            border-left: 5pt solid #10B981;
+        }
+
+        .icon-box {
+            width: 40pt;
+            font-size: 20pt;
+            text-align: center;
+            margin-right: 15pt;
+        }
+
+        .text-box {
+            flex: 1;
+        }
+
+        h3 {
+            margin: 0 0 5pt 0;
+            color: #F8FAFC;
+            font-size: 16pt;
+        }
+
+        p {
+            margin: 0;
+            color: #94A3B8;
+            font-size: 12pt;
+            line-height: 1.4;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="content">
+        <div class="header-wrapper">
+            <h1>工艺管理与质量追溯 (Quality & Process)</h1>
+        </div>
+        <div class="list-container">
+            <div class="list-item">
+                <div class="icon-box">
+                    <p>📝</p>
+                </div>
+                <div class="text-box">
+                    <h3>配方管理 (Recipe Management)</h3>
+                    <p>严谨的 <strong>Draft (草稿) → Review (审核) → Approved (批准)</strong> 审批流，支持版本自动比对与差异高亮。</p>
+                </div>
+            </div>
+            <div class="list-item" style="border-left-color: #38BDF8;">
+                <div class="icon-box">
+                    <p>📊</p>
+                </div>
+                <div class="text-box">
+                    <h3>数据追溯 (Traceability)</h3>
+                    <p>推行<strong>“一管一档” (EBR)</strong>，为每个产品生成全生命周期电子批记录，确保全程可追溯。</p>
+                </div>
+            </div>
+            <div class="list-item" style="border-left-color: #F59E0B;">
+                <div class="icon-box">
+                    <p>🔒</p>
+                </div>
+                <div class="text-box">
+                    <h3>合规性 (Compliance)</h3>
+                    <p>原始数据加密存储，完全符合 <strong>FDA 21 CFR Part 11</strong> 电子记录与电子签名标准。</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>

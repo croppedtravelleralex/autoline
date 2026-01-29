@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <style>
+        html { background: #0B0E14; }
+        body {
+            width: 720pt; height: 405pt; 
+            margin: 0; padding: 0;
+            background: #0B0E14; 
+            font-family: Arial, sans-serif;
+            color: #F4F6F6;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            position: relative;
+        }
+
+        /* Tech Background Decorations */
+        .bg-grid {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background-image: 
+                linear-gradient(rgba(0, 180, 255, 0.05) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0, 180, 255, 0.05) 1px, transparent 1px);
+            background-size: 40pt 40pt;
+            z-index: -1;
+        }
+
+        .header-bar {
+            height: 50pt;
+            background: #1C2833;
+            border-bottom: 2pt solid #00B4FF;
+            display: flex;
+            align-items: center;
+            padding: 0 30pt;
+            box-shadow: 0 4pt 10pt rgba(0, 0, 0, 0.5);
+            margin-bottom: 20pt;
+        }
+
+        .header-bar h1 {
+            font-size: 24pt;
+            margin: 0;
+            color: #00B4FF;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+
+        .content-area {
+            flex: 1;
+            padding: 0 40pt 30pt 40pt;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .main-content {
+            font-size: 16pt;
+            line-height: 1.6;
+        }
+
+        ul {
+            margin: 10pt 0;
+            padding-left: 20pt;
+        }
+
+        li {
+            margin-bottom: 12pt;
+        }
+
+        b {
+            color: #00B4FF;
+        }
+
+        .footer {
+            height: 30pt;
+            border-top: 1pt solid #2E4053;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 30pt;
+            font-size: 10pt;
+            color: #7F8C8D;
+        }
+
+        /* Title Slide Special Styles */
+        .title-slide {
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+        }
+
+        .hero {
+            padding: 40pt;
+            border: 2pt solid #00B4FF;
+            background: rgba(28, 40, 51, 0.8);
+            border-radius: 4pt;
+            box-shadow: 0 0 30pt rgba(0, 180, 255, 0.2);
+        }
+
+        .title-slide h1 {
+            font-size: 42pt;
+            color: #00B4FF;
+            margin: 0 0 10pt 0;
+            letter-spacing: 3pt;
+        }
+
+        .title-slide p {
+            font-size: 18pt;
+            color: #BDC3C7;
+            margin: 0;
+        }
+
+        .accent {
+            color: #E74C3C;
+        }
+    </style>
+</head>
+<body>
+    <div class="bg-grid"></div>
+    <div id="slide-container">
+        <!-- Content will be injected here -->
+    </div>
+    <div class="footer">
+        <p>Autoline Intelligent Monitoring System</p>
+        <p>CONFIDENTIAL | 2026</p>
+    </div>
+</body>
+</html>

@@ -1,0 +1,26 @@
+[
+    {
+        "parameter": "ChamberVacuum",
+        "normalRange": "5e-6 ~ 1e-4 Pa",
+        "warningThreshold": "1e-4 ~ 5e-3 Pa",
+        "faultThreshold": "> 5e-3 Pa",
+        "alarmLevel": "Warning",
+        "action": "提示检查"
+    },
+    {
+        "parameter": "BakeOutTemp",
+        "normalRange": "Set ± 2°C",
+        "warningThreshold": "Set ± 10°C",
+        "faultThreshold": "Set ± 25°C",
+        "alarmLevel": "Fault",
+        "action": "切断加热电源 (SSR)"
+    },
+    {
+        "parameter": "DiffPressure",
+        "normalRange": "< 1 ratio",
+        "warningThreshold": "> 1 ratio",
+        "faultThreshold": "> 2 ratio",
+        "alarmLevel": "Fault",
+        "action": "禁止打开插板阀"
+    }
+]

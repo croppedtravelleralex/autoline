@@ -1,0 +1,350 @@
+@charset "UTF-8";
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* AutoLine Light Mode - Professional & Clean */
+    --background: 210 40% 98%;
+    /* Slate-50 */
+    --foreground: 222 47% 11%;
+    /* Slate-900 */
+
+    --card: 0 0% 100%;
+    /* White */
+    --card-foreground: 222 47% 11%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 222 47% 11%;
+
+    --primary: 199 89% 48%;
+    /* Sky-500 */
+    --primary-foreground: 210 40% 98%;
+
+    --secondary: 210 40% 96.1%;
+    /* Slate-100 */
+    --secondary-foreground: 222 47% 11%;
+
+    --muted: 210 40% 96.1%;
+    /* Slate-100 */
+    --muted-foreground: 215 16% 47%;
+    /* Slate-500 */
+
+    --accent: 210 40% 96.1%;
+    /* Slate-100 */
+    --accent-foreground: 222 47% 11%;
+
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 214.3 31.8% 91.4%;
+    /* Slate-200 */
+    --input: 214.3 31.8% 91.4%;
+    --ring: 199 89% 48%;
+    /* Sky-500 */
+
+    --radius: 0.5rem;
+  }
+
+  .dark {
+    /* AutoLine Dark Mode - Pro Diagnostic Center (靛蓝深邃色调) */
+    --background: 226 50% 6%;
+    /* #0B0E1B */
+    --foreground: 210 40% 98%;
+
+    --card: 226 50% 8%;
+    /* #0D1126 */
+    --card-foreground: 210 40% 98%;
+
+    --popover: 226 50% 8%;
+    --popover-foreground: 210 40% 98%;
+
+    --primary: 224 76% 48%;
+    /* 科技蓝 */
+    --primary-foreground: 210 40% 98%;
+
+    --secondary: 226 40% 15%;
+    --secondary-foreground: 210 40% 98%;
+
+    --muted: 226 30% 12%;
+    --muted-foreground: 215 20% 60%;
+
+    --accent: 224 70% 50%;
+    --accent-foreground: 210 40% 98%;
+
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 226 30% 15%;
+    --input: 226 30% 15%;
+    --ring: 224 76% 48%;
+  }
+}
+
+body {
+  @apply bg-background text-foreground antialiased transition-colors duration-300;
+}
+
+/* Light mode specific grid */
+body:not(.dark) {
+  background-image:
+    radial-gradient(at 0% 0%, rgba(14, 165, 233, 0.05) 0, transparent 50%),
+    radial-gradient(at 100% 100%, rgba(14, 165, 233, 0.03) 0, transparent 50%);
+}
+
+body:not(.dark) .bg-grid {
+  background-image:
+    linear-gradient(to right, rgba(14, 165, 233, 0.05) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(14, 165, 233, 0.05) 1px, transparent 1px);
+}
+
+/* Dark mode specific grid (Existing) */
+.dark body {
+  background-image:
+    radial-gradient(at 0% 0%, rgba(14, 165, 233, 0.1) 0, transparent 50%),
+    radial-gradient(at 100% 100%, rgba(14, 165, 233, 0.05) 0, transparent 50%);
+}
+
+.dark .bg-grid {
+  background-size: 40px 40px;
+  background-image:
+    linear-gradient(to right, rgba(14, 165, 233, 0.03) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(14, 165, 233, 0.03) 1px, transparent 1px);
+}
+
+.glow-text {
+  text-shadow: 0 0 10px rgba(14, 165, 233, 0.5);
+}
+
+@keyframes active-nav-pulse {
+
+  0%,
+  100% {
+    opacity: 0.5;
+  }
+
+  50% {
+    opacity: 0.8;
+  }
+}
+
+.active-nav-pulse {
+  animation: active-nav-pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* 智能点检扫描线特效 */
+@keyframes inspection-scan {
+  0% {
+    transform: translateY(-100%);
+    opacity: 0;
+  }
+
+  10% {
+    opacity: 1;
+  }
+
+  90% {
+    opacity: 1;
+  }
+
+  100% {
+    transform: translateY(100vh);
+    opacity: 0;
+  }
+}
+
+.inspection-scan-line {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 150px;
+  background: linear-gradient(to bottom,
+      transparent,
+      rgba(14, 165, 233, 0.1) 50%,
+      rgba(14, 165, 233, 0.4) 95%,
+      #0ea5e9 100%);
+  box-shadow: 0 10px 30px -5px rgba(14, 165, 233, 0.5);
+  z-index: 1000;
+  pointer-events: none;
+  animation: inspection-scan 2s ease-in-out forwards;
+}
+
+/* 严重报警呼吸辉光 */
+@keyframes alarm-pulse {
+
+  0%,
+  100% {
+    box-shadow: 0 0 15px -2px rgba(239, 68, 68, 0.3);
+    border-color: rgba(239, 68, 68, 0.2);
+  }
+
+  50% {
+    box-shadow: 0 0 30px 2px rgba(239, 68, 68, 0.6);
+    border-color: rgba(239, 68, 68, 0.8);
+  }
+}
+
+.alarm-glow-red {
+  animation: alarm-pulse 1.5s infinite;
+  background: linear-gradient(to bottom right, rgba(239, 68, 68, 0.1), transparent) !important;
+}
+
+/* 健康度量表渐变背景 */
+.health-bar-bg {
+  background: linear-gradient(to right, #10b981, #f59e0b, #ef4444);
+}
+
+/* 慢速旋转动画 */
+@keyframes spin-slow {
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.animate-spin-slow {
+  animation: spin-slow 8s linear infinite;
+}
+
+/* 原型图专属：健康评分环动画 */
+@keyframes dash {
+  from {
+    stroke-dashoffset: 283;
+  }
+
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+.health-ring-path {
+  stroke-dasharray: 283;
+  stroke-dashoffset: 283;
+  animation: dash 1.5s ease-out forwards;
+}
+
+/* 原型图专属：侧边栏历史项悬停 */
+.history-item-hover {
+  position: relative;
+  overflow: hidden;
+}
+
+.history-item-hover::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 2px;
+  height: 100%;
+  background: #3b82f6;
+  transform: scaleY(0);
+  transition: transform 0.2s ease;
+}
+
+.history-item-hover:hover::after {
+  transform: scaleY(1);
+}
+
+/* 渐变装饰辅助类 */
+.bg-glass {
+  background: rgba(13, 17, 38, 0.6);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+.border-glass {
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+/* 腔体详情页：发光仪表盘数字 */
+.instrument-value {
+  font-family: 'JetBrains Mono', 'Fira Code', monospace;
+  font-weight: 800;
+  letter-spacing: -0.05em;
+  filter: drop-shadow(0 0 10px rgba(var(--primary), 0.4));
+}
+
+.instrument-label {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: #64748b;
+}
+
+/* 网格背景装饰 */
+.bg-grid {
+  background-image: radial-gradient(rgba(14, 165, 233, 0.1) 1px, transparent 1px);
+  background-size: 20px 20px;
+}
+
+/* 腔体详情页：玻璃效果面板强化 */
+.chamber-panel {
+  background: rgba(11, 14, 27, 0.7);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(14, 165, 233, 0.2);
+  box-shadow:
+    inset 0 1px 1px rgba(255, 255, 255, 0.05),
+    0 10px 40px rgba(0, 0, 0, 0.6);
+}
+
+/* 对齐小车页面的渐变背景 */
+.bg-chamber-header {
+  @apply dark:bg-gradient-to-r dark:from-slate-900 dark:to-slate-800 border-b border-white/5;
+}
+
+/* JetBrains Mono 字体强化 */
+.font-mono-data {
+  font-family: 'JetBrains Mono', 'Fira Code', monospace;
+  letter-spacing: -0.02em;
+}
+
+
+/* 8工位网格与按钮样式 */
+.station-grid {
+  display: grid;
+  grid-template-columns: repeat(8, 1fr);
+  gap: 6px;
+}
+
+.station-btn {
+  @apply h-8 rounded-md border flex items-center justify-center text-[10px] font-black transition-all;
+  border-color: rgba(255, 255, 255, 0.05);
+  background: rgba(255, 255, 255, 0.02);
+  color: #64748b;
+}
+
+.station-btn.active {
+  @apply bg-indigo-500/20 border-indigo-500/40 text-indigo-400;
+  box-shadow: 0 0 10px rgba(99, 102, 241, 0.2);
+}
+
+.station-btn.completed {
+  @apply bg-emerald-500/20 border-emerald-500/40 text-emerald-400;
+}
+
+/* 真空阀门大按钮样式 */
+.valve-control-btn {
+  @apply w-full h-12 px-4 rounded-xl border flex items-center justify-between transition-all duration-300;
+  background: rgba(255, 255, 255, 0.02);
+  border-color: rgba(255, 255, 255, 0.05);
+}
+
+.valve-control-btn.open {
+  @apply bg-emerald-500/5 border-emerald-500/20;
+  box-shadow: 0 0 15px rgba(16, 185, 129, 0.1);
+}
+
+.valve-circle-indicator {
+  @apply w-1.5 h-1.5 rounded-full transition-all duration-300;
+  background: #334155;
+}
+
+.valve-control-btn.open .valve-circle-indicator {
+  @apply bg-emerald-500 shadow-[0_0_10px_#10b981];
+}

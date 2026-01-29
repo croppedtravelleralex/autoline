@@ -1,0 +1,30 @@
+{
+  "theme": "dark",
+  "notifications": {
+    "enableBrowserNotifications": true,
+    "notifyOnWarning": true,
+    "notifyOnError": true
+  },
+  "thresholds": {
+    "anodeBakeHighTemp": 400.0,
+    "anodeBakeLowTemp": 20.0,
+    "cathodeBakeHighTemp": 430.0,
+    "cathodeBakeLowTemp": 20.0,
+    "growthHighTemp": 250.0,
+    "growthLowTemp": 20.0,
+    "vacuumAlertThreshold": 0.001,
+    "processVacuumThreshold": 0.0005
+  },
+  "hardware": {
+    "protocol": "modbus_tcp",
+    "ipAddress": "127.0.0.1",
+    "port": 502,
+    "slaveId": 1,
+    "pollingInterval": 1000
+  },
+  "data": {
+    "retentionDays": 180,
+    "autoBackup": true,
+    "backupPath": "./backups"
+  }
+}

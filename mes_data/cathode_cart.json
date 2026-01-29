@@ -1,0 +1,21 @@
+{
+    "cartId": "C001",
+    "station": "C-03",
+    "status": "Running",
+    "recipeVer": "v1.2",
+    "loadTime": "2026-01-18T08:30:00Z",
+    "processTime": 1200,
+    "remainingTime": 600,
+    "temperature": 410,
+    "vacuum": 3.5e-5,
+    "targetTemp": 420,
+    "targetVacuum": 1e-6,
+    "csCurrent": 4.0,
+    "o2Pressure": 2e-5,
+    "photoCurrent": 550,
+    "growthProgress": 45.5,
+    "substrateBatch": "FOP-260118-A",
+    "sourceBatch": "CS-2026-X01",
+    "vacuumInterlock": false,
+    "tempSafety": true
+}
