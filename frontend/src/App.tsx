@@ -1,5 +1,5 @@
-
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { useEffect } from 'react';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { SystemStateProvider } from './context/SystemStateContext';
 import { UserProvider } from './context/UserContext';
@@ -25,6 +25,10 @@ import { GlobalErrorListener } from './components/GlobalErrorListener';
 
 function App() {
   console.log('🔧 App component rendered');
+  useEffect(() => {
+    console.log('🚀 AutoLine Application Initialized at:', new Date().toLocaleTimeString());
+  }, []);
+
   return (
     <ErrorBoundary>
       <ToastProvider>

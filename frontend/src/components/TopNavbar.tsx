@@ -107,7 +107,7 @@ export function TopNavbar() {
                 <div className="hidden md:flex gap-8 border-r border-border dark:border-white/10 pr-8 items-center">
                     <div className="text-right">
                         <span className="block text-[9px] text-muted-foreground uppercase font-black tracking-widest opacity-60">在线小车</span>
-                        <span className="font-mono text-xl font-black text-foreground leading-none">{state.carts.length}</span>
+                        <span className="font-mono text-xl font-black text-foreground leading-none">{(state && state.carts) ? state.carts.length : 0}</span>
                     </div>
                     <div className="text-right">
                         <span className="block text-[9px] text-muted-foreground uppercase font-black tracking-widest opacity-60">系统完整性</span>
@@ -143,7 +143,7 @@ export function TopNavbar() {
                         <div className="relative">
                             <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-sky-500 to-blue-600 p-[1px] shadow-lg shadow-sky-500/20 group-hover:shadow-sky-500/40 transition-all duration-300">
                                 <div className="w-full h-full rounded-[10px] bg-background dark:bg-slate-900 flex items-center justify-center overflow-hidden">
-                                    <span className="text-xs font-black text-sky-500 uppercase">{user.username.substring(0, 2)}</span>
+                                    <span className="text-xs font-black text-sky-500 uppercase">{user?.username ? user.username.substring(0, 2) : '??'}</span>
                                 </div>
                             </div>
                             <button

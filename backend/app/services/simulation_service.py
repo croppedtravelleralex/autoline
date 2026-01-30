@@ -167,7 +167,9 @@ class SimulationService:
         
         batch_data = []
         for line in state.lines:
-            for chamber in line.anodeChambers + line.cathodeChambers:
+            anode_chambers = line.anodeChambers or []
+            cathode_chambers = line.cathodeChambers or []
+            for chamber in anode_chambers + cathode_chambers:
                 batch_data.append({
                     'entity_id': chamber.id,
                     'temperature': chamber.temperature,
@@ -481,7 +483,9 @@ class SimulationService:
             # 查找小车所在腔体
             chamber = None
             for line in state.lines:
-                for ch in line.anodeChambers + line.cathodeChambers:
+                anode_chambers = line.anodeChambers or []
+                cathode_chambers = line.cathodeChambers or []
+                for ch in anode_chambers + cathode_chambers:
                     if ch.id == cart.locationChamberId:
                         chamber = ch
                         break

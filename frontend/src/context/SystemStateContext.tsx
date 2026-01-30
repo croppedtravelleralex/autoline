@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from 'react';
+import { createContext, useContext, useState, useCallback, useEffect, useMemo, type ReactNode } from 'react';
 import type { SystemState, LineType, Cart } from '../types';
 import { initialSystemState } from '../data/mockData';
 import { fetchSystemState, controlValve, controlPump, moveCart as apiMoveCart } from '../services/api';
@@ -36,65 +36,77 @@ export function SystemStateProvider({ children }: { children: ReactNode }) {
     const [playbackSnapshots, setPlaybackSnapshots] = useState<Record<string, { line: any; carts: Cart[]; timestamp: number; isSynchronized: boolean; isMissing?: boolean }>>({});
     const [globalPlaybackTime, setGlobalPlaybackTime] = useState<number>(Date.now() / 1000);
     const [error, setError] = useState<string | null>(null);
-    // Provide merged state - 按线体精细化分流
-    // 只有在 playbackSnapshots 中有快照的线体才使用历史数据，其他线体使用实时数据
-    const hasAnyPlayback = Object.keys(playbackSnapshots).length > 0;
-
-    const state = {
-        ...realState,
-        lines: (realState?.lines || []).map(line => {
-            if (!line) return line;
-            const snap = playbackSnapshots?.[line.id];
-            // 如果这条线体没有快照，使用实时数据
-            if (!snap) return line;
-
-            // 有快照但标记为缺失
-            if (snap.isMissing) {
-                const offlineChambers = (chambers: any[]) => chambers.map(c => ({ ...c, state: 'offline' }));
-                return {
-                    ...line,
-                    state: 'offline',
-                    name: `${line.name} (当时未上线)`,
-                    anodeChambers: offlineChambers(line.anodeChambers || []),
-                    cathodeChambers: offlineChambers(line.cathodeChambers || [])
-                };
+    // 🚀 Derived State - Derived from real time state or playback snapshots
+    // Ensure state derivation is extremely robust to avoid UI crashes
+    const state = useMemo(() => {
+        try {
+            if (!realState) {
+                console.warn('SystemStateContext: realState is null, falling back to initialSystemState');
+                return initialSystemState;
             }
 
-            // 使用快照数据
-            return snap.line;
-        }),
-        carts: (() => {
-            const allCarts: Cart[] = [];
-            // 1. Add historical carts from playback lines
-            if (playbackSnapshots) {
-                Object.values(playbackSnapshots).forEach(snap => {
-                    if (snap && !snap.isMissing && Array.isArray(snap.carts)) {
-                        allCarts.push(...snap.carts);
+            const hasAnyPlayback = Object.keys(playbackSnapshots).length > 0;
+
+            const derivedState = {
+                ...realState,
+                lines: (realState.lines || []).map(line => {
+                    if (!line || !line.id) return line;
+                    const snap = playbackSnapshots?.[line.id];
+                    if (snap && !snap.isMissing && snap.line) {
+                        return snap.line;
                     }
-                });
-            }
-            // 2. Add real-time carts for lines NOT in playback
-            if (Array.isArray(realState?.carts)) {
-                realState.carts.forEach(cart => {
-                    if (!cart) return;
-                    const findLineForChamber = (chamberId: string) => {
-                        if (!Array.isArray(realState?.lines)) return null;
-                        for (const l of realState.lines) {
-                            if (!l) continue;
-                            if ([...(l.anodeChambers || []), ...(l.cathodeChambers || [])].some(c => c && c.id === chamberId)) return l.id;
-                        }
-                        return null;
+                    // Offline fallback if missing
+                    const offlineChambers = (chambers: any[]) => (chambers || []).map(c => ({ ...c, state: 'offline' }));
+                    return {
+                        ...line,
+                        anodeChambers: offlineChambers(line.anodeChambers),
+                        cathodeChambers: offlineChambers(line.cathodeChambers)
                     };
-                    const lineId = findLineForChamber(cart.locationChamberId);
-                    // 只有当这条线体不在回放中时才添加实时小车
-                    if (!lineId || !playbackSnapshots?.[lineId]) {
-                        allCarts.push(cart);
+                }),
+                carts: (() => {
+                    const allCarts: Cart[] = [];
+                    // 1. Add historical carts from playback lines
+                    if (playbackSnapshots) {
+                        Object.values(playbackSnapshots).forEach(snap => {
+                            if (snap && !snap.isMissing && Array.isArray(snap.carts)) {
+                                allCarts.push(...snap.carts);
+                            }
+                        });
                     }
-                });
-            }
-            return allCarts;
-        })()
-    };
+
+                    // 2. Add real-time carts for non-playback lines
+                    if (Array.isArray(realState.carts)) {
+                        const findLineForChamber = (chamberId: string) => {
+                            if (!Array.isArray(realState.lines)) return null;
+                            for (const l of realState.lines) {
+                                if (!l) continue;
+                                const chambers = [...(l.anodeChambers || []), ...(l.cathodeChambers || [])];
+                                if (chambers.some(c => c && c.id === chamberId)) return l.id;
+                            }
+                            return null;
+                        };
+
+                        realState.carts.forEach(cart => {
+                            if (!cart || !cart.locationChamberId) return;
+                            const lineId = findLineForChamber(cart.locationChamberId);
+                            if (!lineId || !playbackSnapshots?.[lineId]) {
+                                allCarts.push(cart);
+                            }
+                        });
+                    }
+                    return allCarts;
+                })()
+            };
+
+            return derivedState;
+        } catch (err) {
+            console.error('CRITICAL: Failed to derive system state in SystemStateContext:', err);
+            // Fallback to initial state to keep UI alive
+            return initialSystemState;
+        }
+    }, [realState, playbackSnapshots]);
+
+    const isPlaybackActive = Object.keys(playbackSnapshots).length > 0;
 
     const refreshState = useCallback(async () => {
         try {
