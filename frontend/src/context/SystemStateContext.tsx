@@ -40,28 +40,39 @@ export function SystemStateProvider({ children }: { children: ReactNode }) {
     // Ensure state derivation is extremely robust to avoid UI crashes
     const state = useMemo(() => {
         try {
-            if (!realState) {
-                console.warn('SystemStateContext: realState is null, falling back to initialSystemState');
+            if (!realState || typeof realState !== 'object') {
                 return initialSystemState;
             }
 
-            const hasAnyPlayback = Object.keys(playbackSnapshots).length > 0;
+            const offlineChambers = (chambers: any[]): any[] => {
+                return (Array.isArray(chambers) ? chambers : []).map(c => {
+                    if (!c || typeof c !== 'object') return null;
+                    return {
+                        ...c,
+                        state: 'offline' as const,
+                        valves: c.valves || {
+                            gate_valve: 'closed',
+                            roughing_valve: 'closed',
+                            foreline_valve: 'closed',
+                            vent_valve: 'closed',
+                            transfer_valve: 'closed'
+                        }
+                    };
+                }).filter(Boolean);
+            };
+
+            const safeLines = Array.isArray(realState.lines) ? realState.lines : [];
+            const safeCarts = Array.isArray(realState.carts) ? realState.carts : [];
 
             const derivedState = {
-                ...initialSystemState, // Base on initial to ensure all fields exist
+                ...initialSystemState,
                 ...realState,
-                lines: (realState.lines || []).map(line => {
+                lines: safeLines.map(line => {
                     if (!line || !line.id) return line;
                     const snap = playbackSnapshots?.[line.id];
                     if (snap && !snap.isMissing && snap.line) {
                         return snap.line;
                     }
-                    // Offline fallback if missing
-                    const offlineChambers = (chambers: any[]) => (chambers || []).map(c => ({
-                        ...c,
-                        state: 'offline',
-                        valves: c.valves || { gate_valve: 'closed', roughing_valve: 'closed', foreline_valve: 'closed', vent_valve: 'closed', transfer_valve: 'closed' }
-                    }));
                     return {
                         ...line,
                         anodeChambers: offlineChambers(line.anodeChambers),
@@ -70,7 +81,6 @@ export function SystemStateProvider({ children }: { children: ReactNode }) {
                 }),
                 carts: (() => {
                     const allCarts: Cart[] = [];
-                    // 1. Add historical carts from playback lines
                     if (playbackSnapshots) {
                         Object.values(playbackSnapshots).forEach(snap => {
                             if (snap && !snap.isMissing && Array.isArray(snap.carts)) {
@@ -79,11 +89,9 @@ export function SystemStateProvider({ children }: { children: ReactNode }) {
                         });
                     }
 
-                    // 2. Add real-time carts for non-playback lines
-                    if (Array.isArray(realState.carts)) {
+                    if (Array.isArray(safeCarts)) {
                         const findLineForChamber = (chamberId: string) => {
-                            if (!Array.isArray(realState.lines)) return null;
-                            for (const l of realState.lines) {
+                            for (const l of safeLines) {
                                 if (!l) continue;
                                 const chambers = [...(l.anodeChambers || []), ...(l.cathodeChambers || [])];
                                 if (chambers.some(c => c && c.id === chamberId)) return l.id;
@@ -91,7 +99,7 @@ export function SystemStateProvider({ children }: { children: ReactNode }) {
                             return null;
                         };
 
-                        realState.carts.forEach(cart => {
+                        safeCarts.forEach(cart => {
                             if (!cart || !cart.locationChamberId) return;
                             const lineId = findLineForChamber(cart.locationChamberId);
                             if (!lineId || !playbackSnapshots?.[lineId]) {
@@ -106,7 +114,6 @@ export function SystemStateProvider({ children }: { children: ReactNode }) {
             return derivedState;
         } catch (err) {
             console.error('CRITICAL: Failed to derive system state in SystemStateContext:', err);
-            // Fallback to initial state to keep UI alive
             return initialSystemState;
         }
     }, [realState, playbackSnapshots]);
