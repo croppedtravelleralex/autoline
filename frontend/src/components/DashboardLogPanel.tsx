@@ -18,7 +18,7 @@ export const DashboardLogPanel = ({ title, logs, colorClass }: { title: string, 
                 <span className="text-[9px] text-muted-foreground dark:text-slate-600 font-mono bg-background/50 dark:bg-white/5 px-1.5 rounded">{logs?.length || 0}</span>
             </div>
             <div ref={scrollRef} className="flex-1 overflow-y-auto p-1 space-y-0.5 font-mono text-[10px] scrollbar-thin scrollbar-thumb-muted-foreground/20 dark:scrollbar-thumb-white/5 hover:scrollbar-thumb-muted-foreground/30 dark:hover:scrollbar-thumb-white/10">
-                {logs?.map((log) => (
+                {(Array.isArray(logs) ? logs : []).map((log) => (
                     <div key={log.id} className="flex gap-2 hover:bg-muted dark:hover:bg-white/[0.03] px-2 py-0.5 rounded-sm transition-colors group">
                         <span className="text-muted-foreground dark:text-slate-600 shrink-0 group-hover:text-foreground dark:group-hover:text-slate-500 transition-colors">[{new Date(log.timestamp).toLocaleTimeString([], { hour12: false })}]</span>
                         <span className={cn("break-all leading-tight opacity-80 group-hover:opacity-100 dark:text-slate-300 text-foreground",

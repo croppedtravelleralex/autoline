@@ -7,7 +7,7 @@
     "routes": [
         {
             "src": "/api/(.*)",
-            "dest": "http://autoline:8080/api/$1"
+            "dest": "http://autoline:8001/api/$1"
         },
         {
             "src": "/(.*)",
