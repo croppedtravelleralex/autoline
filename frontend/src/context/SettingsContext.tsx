@@ -104,7 +104,13 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
                 const response = await fetch('/api/settings/simulation');
                 if (response.ok) {
                     const simData = await response.json();
-                    setSimulationConfig(simData);
+                    if (simData && typeof simData === 'object') {
+                        setSimulationConfig({
+                            timeMultiplier: typeof simData.timeMultiplier === 'number' ? simData.timeMultiplier : 1.0,
+                            noiseEnabled: !!simData.noiseEnabled,
+                            activeFaults: Array.isArray(simData.activeFaults) ? simData.activeFaults : []
+                        });
+                    }
                 }
             } catch (e) {
                 console.warn("Failed to load simulation config", e);
