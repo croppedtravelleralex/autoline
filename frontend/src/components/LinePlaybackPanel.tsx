@@ -74,7 +74,11 @@ export const LinePlaybackPanel = ({ lineId, lineName, onClose }: LinePlaybackPan
 
             // 获取该日期全天的事件
             const evs = await fetchEvents(startTimestamp, endTimestamp);
-            setEvents(evs.filter(e => e.line_id === lineId || !e.line_id));
+            if (Array.isArray(evs)) {
+                setEvents(evs.filter(e => e.line_id === lineId || !e.line_id));
+            } else {
+                setEvents([]);
+            }
         } catch (e) {
             console.error('Failed to sync playback data:', e);
         }

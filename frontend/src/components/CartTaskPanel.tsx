@@ -12,9 +12,9 @@ export const CartTaskPanel = ({ carts, lines }: { carts: Cart[], lines: LineData
         </div>
 
         <div className="flex-1 overflow-y-auto px-1.5 py-1 space-y-2 scrollbar-thin scrollbar-thumb-sky-900/30">
-            {lines.map(line => {
+            {(Array.isArray(lines) ? lines : []).map(line => {
                 const allChambers = [...(line.anodeChambers || []), ...(line.cathodeChambers || [])];
-                const lineCarts = carts.filter(cart =>
+                const lineCarts = (Array.isArray(carts) ? carts : []).filter(cart =>
                     allChambers.some(chamber => chamber.id === cart.locationChamberId)
                 );
 
