@@ -135,8 +135,13 @@ export const StatusLED: React.FC<StatusLEDProps> = ({ active, label, error, onCl
 
 export const ChamberCard: React.FC<ChamberCardProps> = ({ chamber, lineId, carts, onToggleValve, onTogglePump, onToggleIndiumSealing, onCartClick, onOpenSettings, isReadOnly }) => {
 
-    const formatSci = (num: number) => {
-        return num.toExponential(1).replace('+', '');
+    const formatSci = (num: number | undefined | null) => {
+        if (num === undefined || num === null) return '0.0e0';
+        try {
+            return num.toExponential(1).replace('+', '');
+        } catch (e) {
+            return '0.0e0';
+        }
     };
 
 
@@ -153,16 +158,16 @@ export const ChamberCard: React.FC<ChamberCardProps> = ({ chamber, lineId, carts
             {/* 紧凑型 Header */}
             <header className="px-2.5 py-1.5 flex items-center justify-between bg-white/[0.02] border-b border-white/5">
                 <div className="flex flex-col">
-                    <span className="text-xs font-black text-slate-200 tracking-tight truncate max-w-[100px] leading-none">{chamber.name}</span>
+                    <span className="text-xs font-black text-slate-200 tracking-tight truncate max-w-[100px] leading-none">{chamber?.name || '未知腔体'}</span>
                 </div>
                 <div className="flex items-center gap-1.5 shrink-0">
-                    {chamber.isHeating && (
+                    {chamber?.isHeating && (
                         <div className="w-1.5 h-1.5 rounded-full bg-orange-500 shadow-[0_0_8px_#f97316] animate-pulse" />
                     )}
                     <div className={cn(
                         "w-1.5 h-1.5 rounded-full",
-                        chamber.state === 'error' ? "bg-red-500 shadow-[0_0_8px_#ef4444] animate-pulse" :
-                            chamber.state === 'warning' ? "bg-amber-500 shadow-[0_0_8px_#f59e0b] shadow-amber-500/50" : "bg-sky-500/40"
+                        chamber?.state === 'error' ? "bg-red-500 shadow-[0_0_8px_#ef4444] animate-pulse" :
+                            chamber?.state === 'warning' ? "bg-amber-500 shadow-[0_0_8px_#f59e0b] shadow-amber-500/50" : "bg-sky-500/40"
                     )} />
                 </div>
             </header>
@@ -173,17 +178,17 @@ export const ChamberCard: React.FC<ChamberCardProps> = ({ chamber, lineId, carts
                 <div className="flex flex-col gap-1.5 px-0.5">
                     <CompactValue
                         label="高级规"
-                        value={formatSci(chamber.highVacPressure)}
+                        value={formatSci(chamber?.highVacPressure)}
                         colorClass="text-sky-400"
                     />
                     <CompactValue
                         label="前级规"
-                        value={formatSci(chamber.forelinePressure)}
+                        value={formatSci(chamber?.forelinePressure)}
                         colorClass="text-amber-500/80"
                     />
                     <CompactValue
                         label="内温"
-                        value={chamber.temperature.toFixed(1)}
+                        value={typeof chamber?.temperature === 'number' ? chamber.temperature.toFixed(1) : '0.0'}
                         unit="°C"
                         colorClass="text-emerald-400"
                     />
@@ -226,40 +231,40 @@ export const ChamberCard: React.FC<ChamberCardProps> = ({ chamber, lineId, carts
                 {/* 状态位网格 (3x2 紧凑设计) */}
                 <div className="grid grid-cols-6 gap-1">
                     <BreathingLED
-                        active={chamber.molecularPump}
+                        active={!!chamber?.molecularPump}
                         label="分子泵"
                         icon={Activity}
-                        onClick={() => !isReadOnly && onTogglePump(lineId, chamber.id, 'molecular')}
+                        onClick={() => !isReadOnly && onTogglePump(lineId, chamber?.id || '', 'molecular')}
                     />
                     <BreathingLED
-                        active={chamber.valves.gate_valve === 'open'}
+                        active={chamber?.valves?.gate_valve === 'open'}
                         label="插板阀"
                         icon={Zap}
-                        onClick={() => !isReadOnly && onToggleValve(lineId, chamber.id, 'gate_valve')}
+                        onClick={() => !isReadOnly && onToggleValve(lineId, chamber?.id || '', 'gate_valve')}
                     />
                     <BreathingLED
-                        active={chamber.roughingPump}
+                        active={!!chamber?.roughingPump}
                         label="粗抽泵"
                         icon={Disc}
-                        onClick={() => !isReadOnly && onTogglePump(lineId, chamber.id, 'roughing')}
+                        onClick={() => !isReadOnly && onTogglePump(lineId, chamber?.id || '', 'roughing')}
                     />
                     <BreathingLED
-                        active={chamber.valves.roughing_valve === 'open'}
+                        active={chamber?.valves?.roughing_valve === 'open'}
                         label="粗抽阀"
                         icon={Wind}
-                        onClick={() => !isReadOnly && onToggleValve(lineId, chamber.id, 'roughing_valve')}
+                        onClick={() => !isReadOnly && onToggleValve(lineId, chamber?.id || '', 'roughing_valve')}
                     />
                     <BreathingLED
-                        active={chamber.valves.foreline_valve === 'open'}
+                        active={chamber?.valves?.foreline_valve === 'open'}
                         label="前级阀"
                         icon={Disc}
-                        onClick={() => !isReadOnly && onToggleValve(lineId, chamber.id, 'foreline_valve')}
+                        onClick={() => !isReadOnly && onToggleValve(lineId, chamber?.id || '', 'foreline_valve')}
                     />
                     <BreathingLED
-                        active={chamber.valves.vent_valve === 'open'}
+                        active={chamber?.valves?.vent_valve === 'open'}
                         label="放气阀"
                         icon={Wind}
-                        onClick={() => !isReadOnly && onToggleValve(lineId, chamber.id, 'vent_valve')}
+                        onClick={() => !isReadOnly && onToggleValve(lineId, chamber?.id || '', 'vent_valve')}
                     />
                     {/* 铟封仓专属 - 铟封功能呼吸灯 */}
                     {chamber.type === 'sealing' && (

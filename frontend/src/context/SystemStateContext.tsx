@@ -48,6 +48,7 @@ export function SystemStateProvider({ children }: { children: ReactNode }) {
             const hasAnyPlayback = Object.keys(playbackSnapshots).length > 0;
 
             const derivedState = {
+                ...initialSystemState, // Base on initial to ensure all fields exist
                 ...realState,
                 lines: (realState.lines || []).map(line => {
                     if (!line || !line.id) return line;
@@ -56,7 +57,11 @@ export function SystemStateProvider({ children }: { children: ReactNode }) {
                         return snap.line;
                     }
                     // Offline fallback if missing
-                    const offlineChambers = (chambers: any[]) => (chambers || []).map(c => ({ ...c, state: 'offline' }));
+                    const offlineChambers = (chambers: any[]) => (chambers || []).map(c => ({
+                        ...c,
+                        state: 'offline',
+                        valves: c.valves || { gate_valve: 'closed', roughing_valve: 'closed', foreline_valve: 'closed', vent_valve: 'closed', transfer_valve: 'closed' }
+                    }));
                     return {
                         ...line,
                         anodeChambers: offlineChambers(line.anodeChambers),
