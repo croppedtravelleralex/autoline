@@ -87,6 +87,7 @@ class SimulationService:
         start_time = now - 24 * 3600
         step = 300  # 5 minutes
         
+        batch_data = []
         current_ts = start_time
         while current_ts < now:
             # 模拟每个腔体在该时刻的状态
@@ -97,15 +98,16 @@ class SimulationService:
                 # 真空度简化模拟 (基于腔体类型和随机波动)
                 vacuum = self._calculate_mock_vacuum(chamber, current_ts)
                 
-                history_service.record_data(
-                    entity_id=chamber.id,
-                    timestamp=current_ts,
-                    temperature=temp,
-                    vacuum=vacuum
-                )
+                batch_data.append({
+                    'entity_id': chamber.id,
+                    'timestamp': current_ts,
+                    'temperature': temp,
+                    'vacuum': vacuum
+                })
             current_ts += step
         
-        print("Mock history generation complete.")
+        history_service.record_data_batch(batch_data)
+        print(f"Mock history generation complete. Recorded {len(batch_data)} points.")
 
     def _calculate_mock_temp(self, chamber: Chamber, timestamp: float) -> float:
         """根据时间和腔体类型计算模拟温度"""
@@ -163,13 +165,18 @@ class SimulationService:
         state = self.state_service.get_state()
         history_service = get_history_service()
         
+        batch_data = []
         for line in state.lines:
             for chamber in line.anodeChambers + line.cathodeChambers:
-                history_service.record_data(
-                    entity_id=chamber.id,
-                    temperature=chamber.temperature,
-                    vacuum=chamber.highVacPressure
-                )
+                batch_data.append({
+                    'entity_id': chamber.id,
+                    'temperature': chamber.temperature,
+                    'vacuum': chamber.highVacPressure,
+                    'timestamp': time.time()
+                })
+        
+        if batch_data:
+            history_service.record_data_batch(batch_data)
 
     def _update_loop(self):
         while self.running:
@@ -438,6 +445,7 @@ class SimulationService:
         """更新小车MES数据"""
         state = self.state_service.get_state()
         current_time = time.time()
+        cart_batch_data = []
         
         for cart in state.carts:
             # ========== 位置变化检测 ==========
@@ -572,13 +580,17 @@ class SimulationService:
                     cart.targetTemp = 25.0
                     cart.targetVacuum = 1e-5
             
-            # ========== 记录历史数据 ==========
+            # ========== 准备批量记录历史数据 ==========
+            cart_batch_data.append({
+                'entity_id': cart.id,
+                'temperature': cart.temperature,
+                'vacuum': cart.vacuum,
+                'timestamp': current_time
+            })
+
+        if cart_batch_data:
             history_service = get_history_service()
-            history_service.record_data(
-                entity_id=cart.id,
-                temperature=cart.temperature,
-                vacuum=cart.vacuum
-            )
+            history_service.record_data_batch(cart_batch_data)
 
     def _update_cart_progress(self, dt: float):
          state = self.state_service.get_state()

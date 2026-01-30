@@ -254,6 +254,38 @@ class HistoryService:
         except Exception as e:
             print(f"Error recording data: {e}")
 
+    def record_data_batch(self, data_list: List[Dict]):
+        """
+        批量记录数据以提高性能
+        data_list item format: {
+            'entity_id': str,
+            'timestamp': float,
+            'temperature': float (optional),
+            'vacuum': float (optional)
+        }
+        """
+        if not data_list:
+            return
+            
+        try:
+            with self._get_conn() as conn:
+                for item in data_list:
+                    entity_id = item['entity_id']
+                    timestamp = item['timestamp']
+                    if 'temperature' in item and item['temperature'] is not None:
+                        conn.execute(
+                            "INSERT INTO history_data (entity_id, metric, timestamp, value) VALUES (?, ?, ?, ?)",
+                            (entity_id, 'temperature', timestamp, item['temperature'])
+                        )
+                    if 'vacuum' in item and item['vacuum'] is not None:
+                        conn.execute(
+                            "INSERT INTO history_data (entity_id, metric, timestamp, value) VALUES (?, ?, ?, ?)",
+                            (entity_id, 'vacuum', timestamp, item['vacuum'])
+                        )
+                conn.commit()
+        except Exception as e:
+            print(f"Error recording data batch: {e}")
+
     def query_data(
         self,
         entity_id: str,
