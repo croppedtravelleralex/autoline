@@ -26,7 +26,7 @@ export function Home() {
 
     // 初始化选中 ID
     useEffect(() => {
-        if (!selectedLineId && state?.lines?.[0]) {
+        if (!selectedLineId && Array.isArray(state?.lines) && state.lines[0]) {
             setSelectedLineId(state.lines[0].id);
         }
     }, [state?.lines, selectedLineId]);
@@ -65,28 +65,28 @@ export function Home() {
 
     // Update selected line if lines change and current selection is invalid
     useEffect(() => {
-        if (state.lines.length > 0 && !state.lines.find(l => l.id === selectedLineId)) {
+        if (Array.isArray(state?.lines) && state.lines.length > 0 && !state.lines.find(l => l?.id === selectedLineId)) {
             setSelectedLineId(state.lines[0].id);
         }
-    }, [state.lines, selectedLineId]);
+    }, [state?.lines, selectedLineId]);
 
     // Update selected cart when system state updates
     useEffect(() => {
-        if (selectedCart) {
-            const updated = state.carts.find(c => c.id === selectedCart.id);
+        if (selectedCart && Array.isArray(state?.carts)) {
+            const updated = state.carts.find(c => c?.id === selectedCart.id);
             if (updated) setSelectedCart(updated);
         }
-    }, [state.carts, selectedCart?.id]);
+    }, [state?.carts, selectedCart?.id]);
 
     // Get selected line and its data
-    const selectedLine = state.lines.find(l => l.id === selectedLineId);
-    const selectedLineIndex = state.lines.findIndex(l => l.id === selectedLineId) + 1;
+    const selectedLine = Array.isArray(state?.lines) ? state.lines.find(l => l?.id === selectedLineId) : undefined;
+    const selectedLineIndex = Array.isArray(state?.lines) ? state.lines.findIndex(l => l?.id === selectedLineId) + 1 : 0;
 
     // Filter carts for selected line only
     const lineChamberIds = selectedLine
-        ? [...(selectedLine.anodeChambers || []), ...(selectedLine.cathodeChambers || [])].map(c => c.id)
+        ? [...(selectedLine.anodeChambers || []), ...(selectedLine.cathodeChambers || [])].filter(Boolean).map(c => c.id)
         : [];
-    const lineCarts = state.carts.filter(cart => lineChamberIds.includes(cart.locationChamberId));
+    const lineCarts = Array.isArray(state?.carts) ? state.carts.filter(cart => cart && lineChamberIds.includes(cart.locationChamberId)) : [];
 
     // Derived logs for panels
     // DashboardLogPanel expects LogEntry[]. 
@@ -180,7 +180,7 @@ export function Home() {
             <LineEditorModal
                 isOpen={isLineEditorOpen}
                 onClose={() => setIsLineEditorOpen(false)}
-                lines={state.lines}
+                lines={Array.isArray(state?.lines) ? state.lines : []}
                 onRefresh={actions.refreshState}
             />
 
@@ -208,70 +208,71 @@ export function Home() {
 
                         {/* Horizontal Line Selector */}
                         <div className="p-3 flex items-center gap-6 overflow-x-auto scrollbar-hide">
-                            {state.lines.map((line, index) => (
-                                <div key={line.id} className="flex items-center gap-1 group shrink-0">
-                                    {/* 1# - 滚动到对应线体区域 */}
-                                    <button
-                                        onClick={() => setSelectedLineId(line.id)}
-                                        className={`px-3 py-1.5 text-base font-bold rounded-md transition-colors cursor-pointer whitespace-nowrap shadow-lg ${selectedLineId === line.id
-                                            ? 'bg-sky-500 text-white shadow-sky-900/50'
-                                            : 'bg-card text-muted-foreground hover:bg-sky-500 hover:text-white dark:bg-sky-600 dark:text-white shadow-sm'
-                                            }`}
-                                        title={`${line.name} - 点击查看`}
-                                    >
-                                        {index + 1}#
-                                    </button>
-
-                                    {/* Action Buttons - Inline, visible on hover */}
-                                    <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity duration-200 relative z-10">
-                                        {/* 编辑键 - 进入腔体增删改移 */}
+                            {Array.isArray(state?.lines) && state.lines.map((line, index) => {
+                                if (!line) return null;
+                                return (
+                                    <div key={line.id} className="flex items-center gap-1 group shrink-0">
+                                        {/* 1# - 滚动到对应线体区域 */}
                                         <button
-                                            onClick={(e) => {
-                                                e.stopPropagation();
-                                                navigate(`/lines/${line.id}`);
-                                            }}
-                                            className="p-1 hover:bg-amber-500/20 text-muted-foreground hover:text-amber-400 rounded transition-colors cursor-pointer"
-                                            title="编辑此线体 (腔体增删改移)"
+                                            onClick={() => setSelectedLineId(line.id)}
+                                            className={`px-3 py-1.5 text-base font-bold rounded-md transition-colors cursor-pointer whitespace-nowrap shadow-lg ${selectedLineId === line.id
+                                                ? 'bg-sky-500 text-white shadow-sky-900/50'
+                                                : 'bg-card text-muted-foreground hover:bg-sky-500 hover:text-white dark:bg-sky-600 dark:text-white shadow-sm'
+                                                }`}
+                                            title={`${line.name} - 点击查看`}
                                         >
-                                            <Edit2 className="w-3.5 h-3.5" />
+                                            {index + 1}#
                                         </button>
 
-
-
-                                        {/* Only show delete if there's more than 1 line */}
-                                        {state.lines.length > 1 && (
+                                        {/* Action Buttons - Inline, visible on hover */}
+                                        <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity duration-200 relative z-10">
+                                            {/* 编辑键 - 进入腔体增删改移 */}
                                             <button
                                                 onClick={(e) => {
                                                     e.stopPropagation();
-                                                    setConfirmDialog({
-                                                        isOpen: true,
-                                                        title: '确认删除线体',
-                                                        message: `确定要删除线体 ${index + 1}# ("${line.name}") 吗？此操作不可恢复！`,
-                                                        variant: 'danger',
-                                                        onConfirm: async () => {
-                                                            try {
-                                                                await deleteLine(line.id);
-                                                                await actions.refreshState();
-                                                                // If deleted line was selected, switch to first line
-                                                                if (selectedLineId === line.id && state.lines.length > 1) {
-                                                                    const remainingLines = state.lines.filter(l => l.id !== line.id);
-                                                                    setSelectedLineId(remainingLines[0]?.id || '');
-                                                                }
-                                                            } catch (err: any) {
-                                                                alert(err.message);
-                                                            }
-                                                        }
-                                                    });
+                                                    navigate(`/lines/${line.id}`);
                                                 }}
-                                                className="p-1 hover:bg-red-500/20 text-muted-foreground hover:text-red-400 rounded transition-colors cursor-pointer"
-                                                title="删除此线体"
+                                                className="p-1 hover:bg-amber-500/20 text-muted-foreground hover:text-amber-400 rounded transition-colors cursor-pointer"
+                                                title="编辑此线体 (腔体增删改移)"
                                             >
-                                                <Trash2 className="w-3.5 h-3.5" />
+                                                <Edit2 className="w-3.5 h-3.5" />
                                             </button>
-                                        )}
+
+                                            {/* Only show delete if there's more than 1 line */}
+                                            {state.lines.length > 1 && (
+                                                <button
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        setConfirmDialog({
+                                                            isOpen: true,
+                                                            title: '确认删除线体',
+                                                            message: `确定要删除线体 ${index + 1}# ("${line.name}") 吗？此操作不可恢复！`,
+                                                            variant: 'danger',
+                                                            onConfirm: async () => {
+                                                                try {
+                                                                    await deleteLine(line.id);
+                                                                    await actions.refreshState();
+                                                                    // If deleted line was selected, switch to first line
+                                                                    if (selectedLineId === line.id && state.lines.length > 1) {
+                                                                        const remainingLines = state.lines.filter(l => l.id !== line.id);
+                                                                        setSelectedLineId(remainingLines[0]?.id || '');
+                                                                    }
+                                                                } catch (err: any) {
+                                                                    alert(err.message);
+                                                                }
+                                                            }
+                                                        });
+                                                    }}
+                                                    className="p-1 hover:bg-red-500/20 text-muted-foreground hover:text-red-400 rounded transition-colors cursor-pointer"
+                                                    title="删除此线体"
+                                                >
+                                                    <Trash2 className="w-3.5 h-3.5" />
+                                                </button>
+                                            )}
+                                        </div>
                                     </div>
-                                </div>
-                            ))}
+                                );
+                            })}
 
                             {/* 全局添加按钮 - 始终在最后 */}
                             <button
