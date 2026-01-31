@@ -16,6 +16,8 @@ async def lifespan(app: FastAPI):
     # Shutdown
     simulation_service.stop()
 
+app = FastAPI(title="AutoLine Monitor API", lifespan=lifespan)
+
 @app.get("/")
 async def root():
     return {"message": "AutoLine Monitor API is running", "version": "1.0.0"}
