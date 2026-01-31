@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
-import { ArrowLeft, Plus, Trash2, GripVertical, Save, X } from 'lucide-react';
+import { ArrowLeft, Plus, Trash2, GripVertical, Save, X, CheckCircle2, AlertCircle } from 'lucide-react';
 import { useSystemStateContext } from '../context/SystemStateContext';
 import { updateLine } from '../services/api';
+import { ConfirmDialog } from '../components/ConfirmDialog';
 import type { LineData, Chamber } from '../types';
 import { cn } from '../lib/utils';
 
@@ -34,6 +35,23 @@ export function LineDetail() {
     const [anodeChambers, setAnodeChambers] = useState<Chamber[]>([]);
     const [cathodeChambers, setCathodeChambers] = useState<Chamber[]>([]);
     const [isDirty, setIsDirty] = useState(false);
+    const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'success' | 'error'>('idle');
+    const [errorMessage, setErrorMessage] = useState('');
+
+    // Dialog State
+    const [confirmDialog, setConfirmDialog] = useState<{
+        isOpen: boolean;
+        title: string;
+        message: string;
+        variant: 'info' | 'danger';
+        onConfirm: () => void;
+    }>({
+        isOpen: false,
+        title: '',
+        message: '',
+        variant: 'info',
+        onConfirm: () => { },
+    });
 
     // 获取线体序号 (用于显示 1#阳极线 等)
     const lineIndex = state.lines.findIndex(l => l.id === id) + 1;
@@ -58,6 +76,7 @@ export function LineDetail() {
 
     const handleSave = async () => {
         if (!line) return;
+        setSaveStatus('saving');
         try {
             // 使用后端返回的数据更新本地状态，避免轮询覆盖
             const updatedLine = await updateLine(line.id, lineName, anodeChambers, cathodeChambers);
@@ -68,10 +87,16 @@ export function LineDetail() {
             setAnodeChambers(updatedLine.anodeChambers || []);
             setCathodeChambers(updatedLine.cathodeChambers || []);
 
-            alert('线体配置已保存成功！');
+            setSaveStatus('success');
             setIsDirty(false);
+
+            // 3秒后还原状态
+            setTimeout(() => setSaveStatus('idle'), 3000);
         } catch (err: any) {
-            alert(`保存失败: ${err.message}`);
+            console.error(err);
+            setErrorMessage(err.message);
+            setSaveStatus('error');
+            setTimeout(() => setSaveStatus('idle'), 5000);
         }
     };
 
@@ -105,8 +130,13 @@ export function LineDetail() {
             },
             molecularPump: false,
             roughingPump: false,
+            cartIds: [],
             hasCart: false,
-            cartId: undefined
+            outerTemperature: 20,
+            maxCartCapacity: 1,
+            targetTemperature: 20,
+            isHeating: false,
+            heatingMode: 'off'
         };
         const newChambers = [...chambers];
         newChambers.splice(index + 1, 0, newChamber);
@@ -117,13 +147,22 @@ export function LineDetail() {
     // 通用删除腔体函数 (检查最少1个)
     const removeChamber = (chamberId: string, chambers: Chamber[], setChambers: (c: Chamber[]) => void, typeName: string) => {
         if (chambers.length <= 1) {
-            alert(`${typeName}至少需要保留1个腔体！`);
+            setErrorMessage(`${typeName}至少需要保留1个腔体！`);
+            setSaveStatus('error');
+            setTimeout(() => setSaveStatus('idle'), 3000);
             return;
         }
-        if (!confirm('确定要删除该腔体吗？')) return;
 
-        setChambers(chambers.filter(c => c.id !== chamberId));
-        setIsDirty(true);
+        setConfirmDialog({
+            isOpen: true,
+            title: '确认删除',
+            message: '确定要删除该腔体吗？此操作在保存前可撤销。',
+            variant: 'danger',
+            onConfirm: () => {
+                setChambers(chambers.filter(c => c.id !== chamberId));
+                setIsDirty(true);
+            }
+        });
     };
 
     // 通用更新腔体名称
@@ -153,9 +192,9 @@ export function LineDetail() {
             <h3 className="text-xl font-bold text-white mb-4 px-4 py-2 bg-gradient-to-r from-sky-600/30 to-transparent rounded-lg border-l-4 border-sky-500">
                 {lineIndex}#{title}
             </h3>
-            <DragDropContext onDragEnd={(result) => handleDragEnd(result, chambers, setChambers)}>
-                <Droppable droppableId={droppableId} direction="horizontal" isDropDisabled={false} isCombineEnabled={false} ignoreContainerClipping={false}>
-                    {(provided) => (
+            <DragDropContext onDragEnd={(result: any) => handleDragEnd(result, chambers, setChambers)}>
+                <Droppable droppableId={droppableId} direction="horizontal">
+                    {(provided: any) => (
                         <div
                             ref={provided.innerRef}
                             {...provided.droppableProps}
@@ -163,7 +202,7 @@ export function LineDetail() {
                         >
                             {chambers.map((chamber, index) => (
                                 <Draggable key={chamber.id} draggableId={chamber.id} index={index}>
-                                    {(provided, snapshot) => (
+                                    {(provided: any, snapshot: any) => (
                                         <div
                                             ref={provided.innerRef}
                                             {...provided.draggableProps}
@@ -269,24 +308,50 @@ export function LineDetail() {
                     </div>
                 </div>
                 <div className="flex items-center gap-3">
-                    {isDirty && <span className="text-amber-400 text-xs italic font-bold">● 未保存修改</span>}
+                    {isDirty && saveStatus === 'idle' && <span className="text-amber-400 text-xs italic font-bold animate-pulse">● 未保存修改</span>}
+                    {saveStatus === 'success' && (
+                        <span className="flex items-center gap-1.5 text-emerald-400 text-xs font-bold bg-emerald-500/10 px-3 py-1.5 rounded-full border border-emerald-500/20 shadow-[0_0_10px_rgba(16,185,129,0.1)]">
+                            <CheckCircle2 className="w-3.5 h-3.5" />
+                            保存成功
+                        </span>
+                    )}
+                    {saveStatus === 'error' && (
+                        <span className="flex items-center gap-1.5 text-red-400 text-xs font-bold bg-red-500/10 px-3 py-1.5 rounded-full border border-red-500/20">
+                            <AlertCircle className="w-3.5 h-3.5" />
+                            {errorMessage || '操作失败'}
+                        </span>
+                    )}
                     <button
                         onClick={handleSave}
-                        disabled={!isDirty}
+                        disabled={!isDirty || saveStatus === 'saving'}
                         className={cn(
-                            "flex items-center gap-2 px-5 py-2 rounded font-bold tracking-wide transition-all shadow-lg",
-                            isDirty
-                                ? "bg-emerald-600 hover:bg-emerald-500 text-white hover:shadow-emerald-900/40 transform hover:-translate-y-0.5"
-                                : "bg-slate-800 text-slate-600 cursor-not-allowed"
+                            "flex items-center gap-2 px-5 py-2 rounded font-bold tracking-wide transition-all shadow-lg min-w-[120px] justify-center",
+                            isDirty && saveStatus !== 'saving'
+                                ? "bg-sky-600 hover:bg-sky-500 text-white hover:shadow-sky-900/40 transform hover:-translate-y-0.5 active:translate-y-0"
+                                : "bg-slate-800 text-slate-600 cursor-not-allowed",
+                            saveStatus === 'saving' && "bg-sky-700/50 cursor-wait"
                         )}
                     >
-                        <Save className="w-4 h-4" />
-                        保存配置
+                        {saveStatus === 'saving' ? (
+                            <div className="w-4 h-4 border-2 border-white/20 border-t-white rounded-full animate-spin" />
+                        ) : (
+                            <Save className="w-4 h-4" />
+                        )}
+                        {saveStatus === 'saving' ? '保存中...' : '保存配置'}
                     </button>
                     <button
                         onClick={() => {
-                            if (isDirty && !confirm("放弃所有未保存的修改？")) return;
-                            navigate('/');
+                            if (isDirty) {
+                                setConfirmDialog({
+                                    isOpen: true,
+                                    title: '放弃修改',
+                                    message: '当前有未保存的修改，确定要放弃并直接退出吗？',
+                                    variant: 'danger',
+                                    onConfirm: () => navigate('/')
+                                });
+                            } else {
+                                navigate('/');
+                            }
                         }}
                         className="p-2.5 bg-slate-800 hover:bg-red-500/20 text-slate-400 hover:text-red-400 rounded-full transition-colors"
                         title="关闭 / Close"
@@ -295,6 +360,18 @@ export function LineDetail() {
                     </button>
                 </div>
             </div>
+
+            <ConfirmDialog
+                isOpen={confirmDialog.isOpen}
+                title={confirmDialog.title}
+                message={confirmDialog.message}
+                variant={confirmDialog.variant}
+                onConfirm={() => {
+                    confirmDialog.onConfirm();
+                    setConfirmDialog(p => ({ ...p, isOpen: false }));
+                }}
+                onCancel={() => setConfirmDialog(p => ({ ...p, isOpen: false }))}
+            />
 
             {/* Editor Body */}
             <div className="flex-1 overflow-auto p-6 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-slate-900 via-slate-950 to-black">
