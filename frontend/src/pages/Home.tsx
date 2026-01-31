@@ -198,9 +198,9 @@ export function Home() {
             {/* We use a flex-col for the main page structure: Top Area (Flex Row) / Bottom Area (Fixed Height) */}
 
             {/* Top Area */}
-            <div className="flex-1 flex overflow-hidden">
+            <div className="flex-1 flex flex-col md:flex-row overflow-hidden">
                 {/* Center: Line Monitor (Scrollable) */}
-                <div className="flex-1 overflow-auto bg-background dark:bg-slate-950/20 relative scrollbar-thin scrollbar-thumb-sky-900/20 flex flex-col">
+                <div className="flex-1 overflow-auto bg-background dark:bg-slate-950/20 relative scrollbar-thin scrollbar-thumb-sky-900/20 flex flex-col min-h-[400px] md:min-h-0">
                     <div className="absolute inset-0 bg-grid opacity-10 pointer-events-none" />
 
                     {/* Line Management Toolbar */}
@@ -289,18 +289,6 @@ export function Home() {
                                         onConfirm: async () => {
                                             try {
                                                 const newLine = await duplicateLine(lastLine.id);
-                                                // 自动重命名为 "N号线"
-                                                // 注意：newLine 返回的是后端对象，可能字段命名风格不同 (snake_case vs camelCase)
-                                                // 但 updateLine 需要 camelCase 的 chambers。
-                                                // 前端 duplicateLine 返回的是 response.json()，通常是 snake_case (Pydantic model dump)
-                                                // 或者我们在 api.ts 里没有做转换。
-                                                // 稳妥起见，我们重新 fetch 或者直接用 createLine? 不，用户要复制模板。
-                                                // 最简单的办法：先刷新，找到最新的那条，然后改名。
-
-                                                // 另一种策略：duplicateLine 后，后端其实已经生成了名字 (Copy)。
-                                                // 我们拿到 newLine.id，直接 updateLine。
-                                                // 假设 newLine 结构包含 id。
-
                                                 await updateLine(
                                                     newLine.id,
                                                     `${nextIndex}号线`,
@@ -325,7 +313,7 @@ export function Home() {
 
                     <div className="p-4">
                         {selectedLine && (
-                            <div className="bg-card dark:bg-slate-900/50 rounded-2xl border border-border dark:border-white/5 p-4 shadow-lg">
+                            <div className="bg-card dark:bg-slate-900/50 rounded-2xl border border-border dark:border-white/5 p-4 shadow-lg overflow-x-auto scrollbar-thin">
                                 <LineSection
                                     line={selectedLine}
                                     carts={lineCarts}
@@ -341,8 +329,8 @@ export function Home() {
                     </div>
                 </div>
 
-                {/* Right: Sidebar (Fixed Width) */}
-                <div className="w-[320px] border-l border-border dark:border-cyan-900/30 bg-muted/95 dark:bg-gradient-to-b dark:from-slate-900/80 dark:to-slate-950/90 backdrop-blur-sm flex flex-col shrink-0">
+                {/* Right: Sidebar (Fixed Width on Desktop, Full Width on Mobile) */}
+                <div className="w-full md:w-[320px] border-l border-border dark:border-cyan-900/30 bg-muted/95 dark:bg-gradient-to-b dark:from-slate-900/80 dark:to-slate-950/90 backdrop-blur-sm flex flex-col shrink-0 min-h-[400px] md:h-full">
                     {/* Top 60%: Tasks */}
                     <div className="h-[60%] border-b border-border dark:border-cyan-900/20 overflow-hidden bg-background/50 dark:bg-cyan-950/10">
                         <CartTaskPanel carts={lineCarts} lines={selectedLine ? [selectedLine] : []} />
@@ -354,8 +342,8 @@ export function Home() {
                 </div>
             </div>
 
-            {/* Bottom Area: Logs (Fixed Height) */}
-            <div className="h-48 shrink-0 border-t border-border bg-background dark:bg-slate-950/80 backdrop-blur-md grid grid-cols-3 divide-x divide-border dark:divide-white/10">
+            {/* Bottom Area: Logs (Fixed Height on Desktop, Auto Height on Mobile) */}
+            <div className="h-auto md:h-48 shrink-0 border-t border-border bg-background dark:bg-slate-950/80 backdrop-blur-md grid grid-cols-1 md:grid-cols-3 divide-y md:divide-y-0 md:divide-x divide-border dark:divide-white/10">
                 <div className="bg-sky-500/5 dark:bg-sky-950/20">
                     <DashboardLogPanel
                         title="系统运行日志"

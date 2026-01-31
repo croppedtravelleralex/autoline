@@ -150,7 +150,7 @@ export const ChamberCard: React.FC<ChamberCardProps> = ({ chamber, lineId, carts
             layout
             initial={false}
             className={cn(
-                "shrink-0 w-[165px] bg-[#0b0e1b]/95 backdrop-blur-md border border-sky-500/20 rounded-xl shadow-2xl overflow-hidden group/card hover:border-sky-400/50 transition-all duration-300",
+                "shrink-0 min-w-[160px] max-w-[170px] bg-[#0b0e1b]/95 backdrop-blur-md border border-sky-500/20 rounded-xl shadow-2xl overflow-hidden group/card hover:border-sky-400/50 transition-all duration-300",
                 isReadOnly ? "cursor-default opacity-95" : "cursor-pointer"
             )}
             onClick={() => !isReadOnly && onOpenSettings?.(chamber)}

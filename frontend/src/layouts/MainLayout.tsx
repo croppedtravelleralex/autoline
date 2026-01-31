@@ -11,7 +11,7 @@ export function MainLayout() {
     const activeAlarms = toasts.filter(t => t.duration === 0);
 
     return (
-        <div className="flex flex-col h-screen bg-background bg-grid overflow-hidden font-sans select-none text-foreground">
+        <div className="flex flex-col min-h-screen md:h-screen bg-background bg-grid overflow-x-hidden md:overflow-hidden font-sans select-none text-foreground">
             <TopNavbar />
 
             {/* 常驻报警区域 (仅当有持久报警时显示) */}
