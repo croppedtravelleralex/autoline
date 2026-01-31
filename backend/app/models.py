@@ -33,6 +33,7 @@ class ValveState(str, Enum):
 
 
 class DeviceStatus(str, Enum):
+    offline = "offline"
     idle = "idle"
     running = "running"
     warning = "warning"

@@ -30,7 +30,7 @@ async def health_check():
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],  # 支持预览域名，生产环境建议在环境变量中配置
-    allow_credentials=True,
+    allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
 )
