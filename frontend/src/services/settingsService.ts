@@ -2,7 +2,7 @@ import axios from 'axios';
 import type { SystemSettings, Recipe } from '../types/settings';
 
 // Assuming API is at localhost:8001/api if not configured otherwise (CORS enabled)
-const API_BASE_URL = '/api';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api';
 
 export const SettingsService = {
     async getSettings(): Promise<SystemSettings> {

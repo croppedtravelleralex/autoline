@@ -61,8 +61,10 @@ export function SystemStateProvider({ children }: { children: ReactNode }) {
                 }).filter(Boolean);
             };
 
-            const safeLines = Array.isArray(realState.lines) ? realState.lines : [];
-            const safeCarts = Array.isArray(realState.carts) ? realState.carts : [];
+            const safeLines = Array.isArray(realState.lines) ? realState.lines :
+                (Array.isArray((realState as any).lines) ? (realState as any).lines : []);
+            const safeCarts = Array.isArray(realState.carts) ? realState.carts :
+                (Array.isArray((realState as any).carts) ? (realState as any).carts : []);
 
             const derivedState = {
                 ...initialSystemState,
@@ -73,10 +75,15 @@ export function SystemStateProvider({ children }: { children: ReactNode }) {
                     if (snap && !snap.isMissing && snap.line) {
                         return snap.line;
                     }
+
+                    // 兼容后端返回的 snake_case 字段
+                    const anodeChambers = line.anodeChambers || (line as any).anode_chambers || [];
+                    const cathodeChambers = line.cathodeChambers || (line as any).cathode_chambers || [];
+
                     return {
                         ...line,
-                        anodeChambers: offlineChambers(line.anodeChambers),
-                        cathodeChambers: offlineChambers(line.cathodeChambers)
+                        anodeChambers: offlineChambers(anodeChambers),
+                        cathodeChambers: offlineChambers(cathodeChambers)
                     };
                 }),
                 carts: (() => {
@@ -93,7 +100,9 @@ export function SystemStateProvider({ children }: { children: ReactNode }) {
                         const findLineForChamber = (chamberId: string) => {
                             for (const l of safeLines) {
                                 if (!l) continue;
-                                const chambers = [...(l.anodeChambers || []), ...(l.cathodeChambers || [])];
+                                const anodeChambers = l.anodeChambers || (l as any).anode_chambers || [];
+                                const cathodeChambers = l.cathodeChambers || (l as any).cathode_chambers || [];
+                                const chambers = [...anodeChambers, ...cathodeChambers];
                                 if (chambers.some(c => c && c.id === chamberId)) return l.id;
                             }
                             return null;
