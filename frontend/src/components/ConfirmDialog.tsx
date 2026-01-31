@@ -1,4 +1,5 @@
 
+import { useEffect } from 'react';
 import { AlertTriangle, Info, X } from 'lucide-react';
 import { cn } from '../lib/utils';
 
@@ -23,6 +24,23 @@ export function ConfirmDialog({
     onConfirm,
     onCancel
 }: ConfirmDialogProps) {
+    useEffect(() => {
+        if (!isOpen) return;
+
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                onConfirm();
+            } else if (e.key === 'Escape') {
+                e.preventDefault();
+                onCancel();
+            }
+        };
+
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, [isOpen, onConfirm, onCancel]);
+
     if (!isOpen) return null;
 
     return (
