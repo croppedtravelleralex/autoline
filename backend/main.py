@@ -21,7 +21,7 @@ app = FastAPI(title="AutoLine Monitor API", lifespan=lifespan)
 # Allow CORS for frontend (支持 Zeabur 部署)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # 生产环境建议使用具体域名
+    allow_origins=["autoline.zeabur.app"],  # 生产环境建议使用具体域名
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -32,6 +32,5 @@ app.include_router(router, prefix="/api")
 if __name__ == "__main__":
     import uvicorn
     import os
-    # Force port to 8001 to match Zeabur Service Port configuration, ignoring env var override
-    port = 8001
+    port = int(os.environ.get("PORT", 8001))
     uvicorn.run(app, host="0.0.0.0", port=port)
