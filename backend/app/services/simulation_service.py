@@ -58,6 +58,20 @@ class SimulationService:
         self.thread = threading.Thread(target=self._update_loop, daemon=True)
         self.thread.start()
 
+    def stop(self):
+        """优雅关闭模拟服务"""
+        if not self.running:
+            return
+        
+        self.running = False
+        
+        # 等待后台线程结束（最多等待2秒）
+        if self.thread and self.thread.is_alive():
+            self.thread.join(timeout=2.0)
+        
+        self.thread = None
+        print("SimulationService stopped.")
+
     def generate_initial_mock_data(self):
         """生成初始模拟数据（如果历史数据为空）"""
         history_service = get_history_service()
