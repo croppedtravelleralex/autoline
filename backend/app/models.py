@@ -83,6 +83,7 @@ class Chamber(BaseModel):
     targetTemperature: float = 25.0                    # 设定温度 (°C)
     isHeating: bool = False                            # 是否正在加热中
     heatingMode: Literal['manual', 'program', 'off'] = 'off' # 加热模式
+    indiumSealing: Optional[bool] = None               # 铟封流程状态
 
     @property
     def hasCart(self) -> bool:

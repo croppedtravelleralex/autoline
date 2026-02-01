@@ -45,13 +45,58 @@
     /* Sky-500 */
 
     --radius: 0.5rem;
+
+    /* Responsive Font Scaling */
+    --root-font-size: 16px;
+  }
+
+  @media (max-width: 768px) {
+    :root {
+      --root-font-size: 14px;
+    }
+  }
+
+  @media (max-width: 480px) {
+    :root {
+      --root-font-size: 12px;
+    }
+  }
+
+  html {
+    font-size: var(--root-font-size);
   }
 
   .dark {
-    /* AutoLine Dark Mode - Pro Diagnostic Center (靛蓝深邃色调) */
+    /* AutoLine Dark Mode - Pro Diagnostic Center (靖蓝深邃色调) */
     --background: 226 50% 6%;
-    /* #0B0E1B */
+    /* #0B0E1B - Level 0: 绝对深底 */
     --foreground: 210 40% 98%;
+
+    /* === 多层色彩分级系统 (Elevation System) === */
+    --surface-1: 226 45% 8%;
+    /* 层级 1: 基底面板 (#0F1429) */
+    --surface-2: 226 40% 11%;
+    /* 层级 2: 卡片/区域面 (#141A36) */
+    --surface-3: 226 35% 15%;
+    /* 层级 3: 悬浮/弹出窗 (#1B2347) */
+    --surface-4: 226 30% 19%;
+    /* 层级 4: 高亮元素边缘 (#242D56) */
+
+    /* 边框变体 */
+    --border-subtle: 226 30% 12%;
+    /* 极淡边框 */
+    --border-default: 226 30% 18%;
+    /* 默认边框 */
+    --border-accent: 224 70% 35%;
+    /* 强调边框 (科技蓝) */
+
+    /* 辉光与发光 */
+    --glow-primary: 199 89% 48%;
+    /* 天蓝色辉光 */
+    --glow-secondary: 224 76% 48%;
+    /* 深蓝色辉光 */
+    --glow-accent: 160 84% 39%;
+    /* 绿宝石辉光 */
 
     --card: 226 50% 8%;
     /* #0D1126 */
@@ -347,4 +392,114 @@ body:not(.dark) .bg-grid {
 
 .valve-control-btn.open .valve-circle-indicator {
   @apply bg-emerald-500 shadow-[0_0_10px_#10b981];
+}
+
+/* Mobile-Specific Utilities */
+@layer utilities {
+  .mobile-scroll-hint {
+    @apply relative after:absolute after:right-0 after:top-0 after:bottom-0 after:w-8 after:bg-gradient-to-l after:from-background/50 after:to-transparent after:pointer-events-none;
+  }
+
+  .glass-card {
+    @apply bg-white/5 backdrop-blur-md border border-white/10 shadow-xl;
+  }
+
+  .hide-scrollbar {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+
+  .hide-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+
+  .nav-item-active-glow {
+    box-shadow: 0 0 15px rgba(14, 165, 233, 0.4), inset 0 0 8px rgba(14, 165, 233, 0.2);
+    border-color: rgba(14, 165, 233, 0.6) !important;
+  }
+
+  /* === 高级色彩分层工具类 === */
+
+  /* 层级分明背景色 */
+  .bg-surface-1 {
+    background-color: hsl(var(--surface-1));
+  }
+
+  .bg-surface-2 {
+    background-color: hsl(var(--surface-2));
+  }
+
+  .bg-surface-3 {
+    background-color: hsl(var(--surface-3));
+  }
+
+  .bg-surface-4 {
+    background-color: hsl(var(--surface-4));
+  }
+
+  /* 微光演绎边框 */
+  .border-glow-subtle {
+    border-color: hsl(var(--border-subtle));
+    box-shadow: 0 0 0 1px hsl(var(--border-subtle) / 0.3);
+  }
+
+  .border-glow-default {
+    border-color: hsl(var(--border-default));
+    box-shadow: 0 0 6px hsl(var(--glow-primary) / 0.1);
+  }
+
+  .border-glow-accent {
+    border-color: hsl(var(--border-accent));
+    box-shadow: 0 0 12px hsl(var(--glow-primary) / 0.25), inset 0 0 4px hsl(var(--glow-primary) / 0.1);
+  }
+
+  /* 线体面板高级效果 */
+  .line-panel {
+    background: linear-gradient(135deg, hsl(var(--surface-1)) 0%, hsl(var(--surface-2)) 100%);
+    border: 1px solid hsl(var(--border-subtle));
+    box-shadow:
+      0 4px 20px rgba(0, 0, 0, 0.4),
+      inset 0 1px 0 rgba(255, 255, 255, 0.02);
+    border-radius: 1rem;
+  }
+
+  /* 薄薄的顶部光泽边缘 */
+  .panel-shine {
+    position: relative;
+  }
+
+  .panel-shine::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+    border-radius: inherit;
+  }
+
+  /* 工业级投影 */
+  .industrial-shadow {
+    box-shadow:
+      0 2px 4px rgba(0, 0, 0, 0.3),
+      0 8px 16px rgba(0, 0, 0, 0.25),
+      0 16px 32px rgba(0, 0, 0, 0.15),
+      inset 0 1px 1px rgba(255, 255, 255, 0.03);
+  }
+
+  /* 微光结缘 (用于卡片底部) */
+  .glow-edge-bottom {
+    position: relative;
+  }
+
+  .glow-edge-bottom::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 10%;
+    right: 10%;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, hsl(var(--glow-primary) / 0.4), transparent);
+  }
 }

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import type { Cart, LineData } from '../types';
 import {
     LineChart,
@@ -128,11 +128,33 @@ export function MESHistoryChart({ lines }: MESHistoryChartProps) {
         return selectedMetric === 'temperature' ? '#ef4444' : '#06b6d4';
     };
 
+    // 数据采样优化：当数据量过大时进行下采样，防止浏览器卡死
+    const sampledData = useMemo(() => {
+        const MAX_POINTS = 1000;
+        if (historyData.length <= MAX_POINTS) return historyData;
+
+        const step = Math.ceil(historyData.length / MAX_POINTS);
+        const result = [];
+        for (let i = 0; i < historyData.length; i += step) {
+            result.push(historyData[i]);
+        }
+        // 确保包含最后一个点
+        if (result[result.length - 1] !== historyData[historyData.length - 1]) {
+            result.push(historyData[historyData.length - 1]);
+        }
+        return result;
+    }, [historyData]);
+
     return (
         <div className="bg-gray-900 border border-cyan-500/30 rounded-lg p-4 h-full overflow-hidden flex flex-col gap-4">
             <h2 className="text-cyan-400 text-lg font-bold flex items-center gap-2">
                 <span className="text-2xl">📈</span>
                 历史趋势图 (腔体数据)
+                {historyData.length > sampledData.length && (
+                    <span className="text-[10px] bg-yellow-500/20 text-yellow-500 px-2 py-0.5 rounded ml-2 font-normal">
+                        已启用数据采样 ({historyData.length} → {sampledData.length})
+                    </span>
+                )}
             </h2>
 
             {/* Controls */}
@@ -219,7 +241,7 @@ export function MESHistoryChart({ lines }: MESHistoryChartProps) {
                 ) : (
                     <ResponsiveContainer width="100%" height="100%">
                         <LineChart
-                            data={historyData}
+                            data={sampledData}
                             margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
                         >
                             <CartesianGrid strokeDasharray="3 3" stroke="#374151" />

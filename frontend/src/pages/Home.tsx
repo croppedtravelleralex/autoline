@@ -55,12 +55,18 @@ export function Home() {
         lineId: string;
         chamberId: string;
         lineName: string; // for display
+        lineIndex: number; // 线体序号
+        dailySeq: number;  // 当天该线体进样次数
+        lineType: 'anode' | 'cathode' | undefined; // 阳极或阴极
     }>({
         isOpen: false,
         type: 'load',
         lineId: '',
         chamberId: '',
         lineName: '',
+        lineIndex: 1,
+        dailySeq: 1,
+        lineType: undefined,
     });
 
     // Update selected line if lines change and current selection is invalid
@@ -100,12 +106,31 @@ export function Home() {
     const handleCartOperation = (lineId: string, chamberId: string, type: 'load' | 'unload') => {
         const line = state.lines.find(l => l.id === lineId);
         if (!line) return;
+
+        // 计算线体序号 (1-based)
+        const lineIndex = state.lines.findIndex(l => l.id === lineId) + 1;
+
+        // 判断是阳极还是阴极腔体
+        const anodeChamberIds = (line.anodeChambers || []).map(c => c.id);
+        const cathodeChamberIds = (line.cathodeChambers || []).map(c => c.id);
+        const lineType: 'anode' | 'cathode' | undefined =
+            anodeChamberIds.includes(chamberId) ? 'anode' :
+                cathodeChamberIds.includes(chamberId) ? 'cathode' : undefined;
+
+        // 计算当天该线体的进样次数 (基于同类型小车数量 + 1)
+        const relevantChamberIds = lineType === 'cathode' ? cathodeChamberIds : anodeChamberIds;
+        const typeCarts = state.carts.filter(c => relevantChamberIds.includes(c.locationChamberId));
+        const dailySeq = typeCarts.length + 1;
+
         setLoadUnloadModal({
             isOpen: true,
             type,
             lineId,
             chamberId,
-            lineName: line.name
+            lineName: line.name,
+            lineIndex,
+            dailySeq,
+            lineType,
         });
     };
 
@@ -136,6 +161,7 @@ export function Home() {
                 lines={state.lines}
                 onClose={() => setSelectedCart(null)}
                 onMove={actions.moveCart}
+                onUpdateCart={actions.updateCart}
                 onDelete={(cartId) => {
                     setConfirmDialog({
                         isOpen: true,
@@ -171,6 +197,10 @@ export function Home() {
                 isOpen={loadUnloadModal.isOpen}
                 type={loadUnloadModal.type}
                 lineName={loadUnloadModal.lineName}
+                lineId={loadUnloadModal.lineId}
+                lineIndex={loadUnloadModal.lineIndex}
+                dailySeq={loadUnloadModal.dailySeq}
+                lineType={loadUnloadModal.lineType}
                 onConfirm={handleConfirmLoadUnload}
                 onCancel={() => setLoadUnloadModal(prev => ({ ...prev, isOpen: false }))}
             />
@@ -198,16 +228,16 @@ export function Home() {
             {/* We use a flex-col for the main page structure: Top Area (Flex Row) / Bottom Area (Fixed Height) */}
 
             {/* Top Area */}
-            <div className="flex-1 flex flex-col md:flex-row overflow-hidden">
+            <div className="flex-1 flex flex-col md:flex-row overflow-hidden min-h-0">
                 {/* Center: Line Monitor (Scrollable) */}
-                <div className="flex-1 overflow-auto bg-background dark:bg-slate-950/20 relative scrollbar-thin scrollbar-thumb-sky-900/20 flex flex-col min-h-[400px] md:min-h-0">
+                <div className="flex-1 overflow-auto bg-background dark:bg-slate-950/20 relative scrollbar-thin scrollbar-thumb-sky-900/20 flex flex-col min-h-[50vh] md:min-h-0">
                     <div className="absolute inset-0 bg-grid opacity-10 pointer-events-none" />
 
                     {/* Line Management Toolbar */}
                     <div className="shrink-0 sticky top-0 z-20 bg-background/90 dark:bg-slate-950/90 backdrop-blur-sm border-b border-border dark:border-white/5">
 
                         {/* Horizontal Line Selector */}
-                        <div className="p-3 flex items-center gap-6 overflow-x-auto scrollbar-hide">
+                        <div className="p-2 sm:p-3 flex items-center gap-3 sm:gap-6 overflow-x-auto hide-scrollbar sm:scrollbar-hide">
                             {Array.isArray(state?.lines) && state.lines.map((line, index) => {
                                 if (!line) return null;
                                 return (
@@ -215,7 +245,7 @@ export function Home() {
                                         {/* 1# - 滚动到对应线体区域 */}
                                         <button
                                             onClick={() => setSelectedLineId(line.id)}
-                                            className={`px-3 py-1.5 text-base font-bold rounded-md transition-colors cursor-pointer whitespace-nowrap shadow-lg ${selectedLineId === line.id
+                                            className={`px-3 py-1.5 text-sm sm:text-base font-bold rounded-md transition-colors cursor-pointer whitespace-nowrap shadow-lg ${selectedLineId === line.id
                                                 ? 'bg-sky-500 text-white shadow-sky-900/50'
                                                 : 'bg-card text-muted-foreground hover:bg-sky-500 hover:text-white dark:bg-sky-600 dark:text-white shadow-sm'
                                                 }`}
@@ -225,7 +255,7 @@ export function Home() {
                                         </button>
 
                                         {/* Action Buttons - Inline, visible on hover */}
-                                        <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity duration-200 relative z-10">
+                                        <div className="flex items-center gap-0.5 opacity-0 lg:group-hover:opacity-100 transition-opacity duration-200 lg:relative z-10">
                                             {/* 编辑键 - 进入腔体增删改移 */}
                                             <button
                                                 onClick={(e) => {
@@ -303,17 +333,17 @@ export function Home() {
                                         }
                                     });
                                 }}
-                                className="w-8 h-8 flex items-center justify-center rounded-full bg-card hover:bg-sky-600 text-muted-foreground hover:text-white dark:bg-slate-800 dark:text-slate-400 transition-all shadow-lg hover:shadow-sky-900/50 hover:scale-110 cursor-pointer shrink-0 border border-border dark:border-white/5"
+                                className="w-7 h-7 sm:w-8 sm:h-8 flex items-center justify-center rounded-full bg-card hover:bg-sky-600 text-muted-foreground hover:text-white dark:bg-slate-800 dark:text-slate-400 transition-all shadow-lg hover:shadow-sky-900/50 hover:scale-110 cursor-pointer shrink-0 border border-border dark:border-white/5"
                                 title="添加新线体 (复制最后一条)"
                             >
-                                <Plus className="w-5 h-5" />
+                                <Plus className="w-4 h-4 sm:w-5 sm:h-5" />
                             </button>
                         </div>
                     </div>
 
-                    <div className="p-4">
+                    <div className="p-2 sm:p-4 min-h-0 flex-1 overflow-auto mobile-scroll-hint">
                         {selectedLine && (
-                            <div className="bg-card dark:bg-slate-900/50 rounded-2xl border border-border dark:border-white/5 p-4 shadow-lg overflow-x-auto scrollbar-thin">
+                            <div className="bg-card dark:bg-slate-900/50 rounded-xl sm:rounded-2xl border border-border dark:border-white/5 p-2 sm:p-4 shadow-lg overflow-x-auto scrollbar-thin">
                                 <LineSection
                                     line={selectedLine}
                                     carts={lineCarts}
@@ -330,35 +360,35 @@ export function Home() {
                 </div>
 
                 {/* Right: Sidebar (Fixed Width on Desktop, Full Width on Mobile) */}
-                <div className="w-full md:w-[320px] border-l border-border dark:border-cyan-900/30 bg-muted/95 dark:bg-gradient-to-b dark:from-slate-900/80 dark:to-slate-950/90 backdrop-blur-sm flex flex-col shrink-0 min-h-[400px] md:h-full">
+                <div className="w-full md:w-[320px] border-l md:border-l border-t md:border-t-0 border-border dark:border-cyan-900/30 bg-muted/95 dark:bg-gradient-to-b dark:from-slate-900/80 dark:to-slate-950/90 backdrop-blur-sm flex flex-col shrink-0 h-auto md:h-full overflow-hidden">
                     {/* Top 60%: Tasks */}
-                    <div className="h-[60%] border-b border-border dark:border-cyan-900/20 overflow-hidden bg-background/50 dark:bg-cyan-950/10">
+                    <div className="h-[250px] md:h-[60%] border-b border-border dark:border-cyan-900/20 overflow-hidden bg-background/50 dark:bg-cyan-950/10 shrink-0">
                         <CartTaskPanel carts={lineCarts} lines={selectedLine ? [selectedLine] : []} />
                     </div>
                     {/* Bottom 40%: Progress */}
-                    <div className="flex-1 overflow-hidden bg-background/30 dark:bg-emerald-950/10">
+                    <div className="min-h-[200px] md:flex-1 overflow-hidden bg-background/30 dark:bg-emerald-950/10">
                         <CartProgressPanel carts={lineCarts} lines={selectedLine ? [selectedLine] : []} />
                     </div>
                 </div>
             </div>
 
             {/* Bottom Area: Logs (Fixed Height on Desktop, Auto Height on Mobile) */}
-            <div className="h-auto md:h-48 shrink-0 border-t border-border bg-background dark:bg-slate-950/80 backdrop-blur-md grid grid-cols-1 md:grid-cols-3 divide-y md:divide-y-0 md:divide-x divide-border dark:divide-white/10">
-                <div className="bg-sky-500/5 dark:bg-sky-950/20">
+            <div className="h-auto md:h-48 shrink-0 border-t border-border bg-background dark:bg-slate-950/80 backdrop-blur-md grid grid-cols-1 md:grid-cols-3 divide-y md:divide-y-0 md:divide-x divide-border dark:divide-white/10 overflow-hidden">
+                <div className="bg-sky-500/5 dark:bg-sky-950/20 h-32 md:h-full overflow-hidden shrink-0">
                     <DashboardLogPanel
                         title="系统运行日志"
                         logs={state.systemLogs}
                         colorClass="text-sky-600 dark:text-sky-400"
                     />
                 </div>
-                <div className="bg-amber-500/5 dark:bg-amber-950/20">
+                <div className="bg-amber-500/5 dark:bg-amber-950/20 h-32 md:h-full overflow-hidden shrink-0">
                     <DashboardLogPanel
                         title="警示与报警"
                         logs={warningLogs}
                         colorClass="text-amber-600 dark:text-amber-400"
                     />
                 </div>
-                <div className="bg-emerald-500/5 dark:bg-emerald-950/20">
+                <div className="bg-emerald-500/5 dark:bg-emerald-950/20 h-32 md:h-full overflow-hidden shrink-0">
                     <OperationLogPanel
                         logs={state.operationLogs}
                         lines={state.lines}

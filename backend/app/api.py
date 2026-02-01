@@ -69,11 +69,14 @@ class UpdateChamberRequest(BaseModel):
     targetTemperature: Optional[float] = None
     isHeating: Optional[bool] = None
     heatingMode: Optional[str] = None
+    indiumSealing: Optional[bool] = None
 
 @router.put("/lines/{line_id}/chambers/{chamber_id}")
 async def update_chamber(line_id: str, chamber_id: str, request: UpdateChamberRequest):
     """更新腔体配置（如名称、容量、设定温度）"""
     try:
+        # Debug: Print incoming request fields
+        print(f"[DEBUG] API Request received for chamber {chamber_id}: {request.model_dump()}")
         updates = {k: v for k, v in request.model_dump().items() if v is not None}
         return state_service.update_chamber(line_id, chamber_id, updates)
     except ValueError as e:

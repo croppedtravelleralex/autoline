@@ -1,7 +1,7 @@
-
-import { useEffect } from 'react';
 import { AlertTriangle, Info, X } from 'lucide-react';
 import { cn } from '../lib/utils';
+import { useKeyboardShortcut } from '../hooks/useKeyboardShortcut';
+import { Kbd } from './Kbd';
 
 interface ConfirmDialogProps {
     isOpen: boolean;
@@ -24,22 +24,11 @@ export function ConfirmDialog({
     onConfirm,
     onCancel
 }: ConfirmDialogProps) {
-    useEffect(() => {
-        if (!isOpen) return;
-
-        const handleKeyDown = (e: KeyboardEvent) => {
-            if (e.key === 'Enter') {
-                e.preventDefault();
-                onConfirm();
-            } else if (e.key === 'Escape') {
-                e.preventDefault();
-                onCancel();
-            }
-        };
-
-        window.addEventListener('keydown', handleKeyDown);
-        return () => window.removeEventListener('keydown', handleKeyDown);
-    }, [isOpen, onConfirm, onCancel]);
+    // 使用统一快捷键 Hook
+    useKeyboardShortcut([
+        { key: 'Enter', handler: onConfirm },
+        { key: 'Escape', handler: onCancel }
+    ], isOpen);
 
     if (!isOpen) return null;
 
@@ -80,24 +69,34 @@ export function ConfirmDialog({
                 </div>
 
                 {/* Footer */}
-                <div className="flex items-center justify-end gap-3 p-4 bg-slate-950/50 border-t border-white/5">
-                    <button
-                        onClick={onCancel}
-                        className="px-4 py-2 rounded-lg text-slate-400 hover:text-white hover:bg-white/5 transition-colors font-medium border border-transparent hover:border-white/10"
-                    >
-                        {cancelText}
-                    </button>
-                    <button
-                        onClick={onConfirm}
-                        className={cn(
-                            "px-6 py-2 rounded-lg text-white font-bold shadow-lg transition-all transform hover:-translate-y-0.5 active:translate-y-0",
-                            variant === 'danger'
-                                ? "bg-red-600 hover:bg-red-500 hover:shadow-red-900/40"
-                                : "bg-sky-600 hover:bg-sky-500 hover:shadow-sky-900/40"
-                        )}
-                    >
-                        {confirmText}
-                    </button>
+                <div className="flex items-center justify-end gap-3 mt-8">
+                    <div className="relative group">
+                        <button
+                            onClick={onCancel}
+                            className="px-4 py-2 rounded-lg text-slate-400 hover:text-white hover:bg-white/5 transition-colors font-medium border border-transparent hover:border-white/10"
+                        >
+                            {cancelText}
+                        </button>
+                        <div className="absolute top-full left-1/2 -translate-x-1/2 pt-1 pointer-events-none">
+                            <Kbd variant="ghost" className="opacity-0 group-hover:opacity-100 transition-all translate-y-1 group-hover:translate-y-0 scale-75 whitespace-nowrap">Esc</Kbd>
+                        </div>
+                    </div>
+                    <div className="relative group">
+                        <button
+                            onClick={onConfirm}
+                            className={cn(
+                                "px-6 py-2 rounded-lg text-white font-bold shadow-lg transition-all transform hover:-translate-y-0.5 active:translate-y-0",
+                                variant === 'danger'
+                                    ? "bg-red-600 hover:bg-red-500 hover:shadow-red-900/40"
+                                    : "bg-sky-600 hover:bg-sky-500 hover:shadow-sky-900/40"
+                            )}
+                        >
+                            {confirmText}
+                        </button>
+                        <div className="absolute top-full left-1/2 -translate-x-1/2 pt-1 pointer-events-none">
+                            <Kbd variant="ghost" className="opacity-0 group-hover:opacity-100 transition-all translate-y-1 group-hover:translate-y-0 scale-75 whitespace-nowrap">Enter</Kbd>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>

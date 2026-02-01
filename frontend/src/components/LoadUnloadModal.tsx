@@ -1,11 +1,15 @@
 import { useState, useEffect } from 'react';
 import { X, RefreshCw, FileText } from 'lucide-react';
 import { useSettings } from '../context/SettingsContext';
+import { useKeyboardShortcut } from '../hooks/useKeyboardShortcut';
 
 interface LoadUnloadModalProps {
     isOpen: boolean;
     type: 'load' | 'unload'; // load: 进样(填数据), unload: 出样(确认)
     lineName: string;
+    lineId?: string;  // 新增: 用于生成批次号
+    lineIndex?: number; // 新增: 线体序号 (1, 2, 3...)
+    dailySeq?: number;  // 新增: 当天该线体的第几次进样
     lineType?: 'anode' | 'cathode'; // 新增: 用于过滤配方
     onConfirm: (data?: any) => void;
     onCancel: () => void;
@@ -20,9 +24,37 @@ interface MESData {
     recipeId: string;
 }
 
-// 随机生成 MES 数据
-const generateRandomData = () => ({
-    batchNo: `BATCH-${new Date().getFullYear()}${(new Date().getMonth() + 1).toString().padStart(2, '0')}-${Math.floor(Math.random() * 1000).toString().padStart(3, '0')}`,
+/**
+ * 生成进样批次号
+ * 阳极(anode): LX + 年份后两位 + 月 + 日 + 线体编号 + 当天序号 + 01
+ *   例如: LX2602011101 表示 2026年02月01日 1号线 第1组 01
+ * 阴极(cathode): 1B-XX
+ *   例如: 1B-45 表示 1号线 阴极 第45号
+ */
+const generateAnodeBatchNo = (lineIndex: number = 1, dailySeq: number = 1): string => {
+    const now = new Date();
+    const yy = String(now.getFullYear()).slice(-2);
+    const mm = String(now.getMonth() + 1).padStart(2, '0');
+    const dd = String(now.getDate()).padStart(2, '0');
+    const lineNum = String(lineIndex); // 线体编号不补零
+    const seq = String(dailySeq); // 当天序号不补零
+    return `LX${yy}${mm}${dd}${lineNum}${seq}01`;
+};
+
+const generateCathodeBatchNo = (lineIndex: number = 1, cathodeSeq: number = 1): string => {
+    return `${lineIndex}B-${cathodeSeq}`;
+};
+
+const generateBatchNo = (lineType: 'anode' | 'cathode' | undefined, lineIndex: number = 1, seq: number = 1): string => {
+    if (lineType === 'cathode') {
+        return generateCathodeBatchNo(lineIndex, seq);
+    }
+    return generateAnodeBatchNo(lineIndex, seq);
+};
+
+// 随机生成 MES 数据 (除批次号外)
+const generateRandomData = (lineType: 'anode' | 'cathode' | undefined, lineIndex: number = 1, dailySeq: number = 1) => ({
+    batchNo: generateBatchNo(lineType, lineIndex, dailySeq),
     materialCode: `MAT-${Math.floor(Math.random() * 10000)}`,
     quantity: 24,
     operator: ['张三', '李四', '王五', '赵六'][Math.floor(Math.random() * 4)],
@@ -30,9 +62,22 @@ const generateRandomData = () => ({
     recipeId: ''
 });
 
-export function LoadUnloadModal({ isOpen, type, lineName, lineType, onConfirm, onCancel }: LoadUnloadModalProps) {
-    const [data, setData] = useState<MESData>(generateRandomData());
+export function LoadUnloadModal({ isOpen, type, lineName, lineId, lineIndex = 1, dailySeq = 1, lineType, onConfirm, onCancel }: LoadUnloadModalProps) {
+    const [data, setData] = useState<MESData>({
+        batchNo: '',
+        materialCode: '',
+        quantity: 0,
+        operator: '',
+        workOrder: '',
+        recipeId: ''
+    });
     const { recipes } = useSettings();
+
+    // 快捷键
+    useKeyboardShortcut([
+        { key: 'Escape', handler: onCancel },
+        { key: 'Enter', handler: () => onConfirm(data) }
+    ], isOpen);
 
     // 过滤适用配方
     const availableRecipes = recipes.filter(r =>
@@ -41,7 +86,7 @@ export function LoadUnloadModal({ isOpen, type, lineName, lineType, onConfirm, o
 
     useEffect(() => {
         if (isOpen && type === 'load') {
-            const initialData = generateRandomData();
+            const initialData = generateRandomData(lineType, lineIndex, dailySeq);
             // 自动选择默认配方
             const defaultRecipe = availableRecipes.find(r => r.isDefault);
             if (defaultRecipe) {
@@ -56,7 +101,7 @@ export function LoadUnloadModal({ isOpen, type, lineName, lineType, onConfirm, o
     if (!isOpen) return null;
 
     const handleRandomize = () => {
-        const newData = generateRandomData();
+        const newData = generateRandomData(lineType, lineIndex, dailySeq);
         // Keep selected recipe
         newData.recipeId = data.recipeId;
         setData(newData);
@@ -120,11 +165,11 @@ export function LoadUnloadModal({ isOpen, type, lineName, lineType, onConfirm, o
                                     />
                                 </div>
                                 <div className="space-y-1">
-                                    <label className="text-xs text-muted-foreground dark:text-slate-500 block">批次号</label>
+                                    <label className="text-xs text-muted-foreground dark:text-slate-500 block">进样批次号</label>
                                     <input
                                         value={data.batchNo}
                                         onChange={e => setData({ ...data, batchNo: e.target.value })}
-                                        className="w-full bg-muted/50 dark:bg-slate-800 border border-border dark:border-white/10 rounded px-2 py-1.5 text-sm text-foreground dark:text-white focus:ring-1 focus:ring-sky-500 outline-none"
+                                        className="w-full bg-muted/50 dark:bg-slate-800 border border-border dark:border-white/10 rounded px-2 py-1.5 text-sm text-foreground dark:text-white focus:ring-1 focus:ring-sky-500 outline-none font-mono"
                                     />
                                 </div>
                                 <div className="space-y-1">

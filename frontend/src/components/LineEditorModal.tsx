@@ -3,6 +3,7 @@ import { X, Plus, Edit2, Copy, Save } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { createLine, updateLine, duplicateLine } from '../services/api';
 import type { LineData } from '../types';
+import { useKeyboardShortcut } from '../hooks/useKeyboardShortcut';
 
 interface LineEditorModalProps {
     isOpen: boolean;
@@ -17,6 +18,18 @@ export const LineEditorModal = ({ isOpen, onClose, lines, onRefresh }: LineEdito
     const [newLineName, setNewLineName] = useState('');
     const [newLineType, setNewLineType] = useState('anode');
     const [isAdding, setIsAdding] = useState(false);
+
+    // 快捷键
+    useKeyboardShortcut([
+        { key: 'Escape', handler: onClose },
+        {
+            key: 'Enter',
+            handler: () => {
+                if (isAdding) handleCreate();
+                else if (editingId) handleUpdate(editingId);
+            }
+        }
+    ], isOpen);
 
     const handleCreate = async () => {
         if (!newLineName.trim()) return;

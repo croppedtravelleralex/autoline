@@ -167,9 +167,21 @@ class StateService:
         for key, value in updates.items():
             print(f"[DEBUG] Setting {key} = {value}, hasattr = {hasattr(chamber, key)}")
             if hasattr(chamber, key):
+                old_val = getattr(chamber, key)
                 setattr(chamber, key, value)
+                
+                # 特殊逻辑：如果是铟封状态改变，记录操作日志
+                if key == 'indiumSealing' and old_val != value:
+                    line_idx = next((i + 1 for i, l in enumerate(self.state.lines) if l.id == line_id), "?")
+                    polarity_zh = "阳极" if any(c.id == chamber_id for c in line.anodeChambers) else "阴极"
+                    self._add_log(LogEntry(
+                        id=str(uuid.uuid4()),
+                        timestamp=time.time() * 1000,
+                        type='operation',
+                        content=f"管理员{'启动' if value else '停止'}了{line_idx}#{polarity_zh}{chamber.name}的铟封程序",
+                        level='info',
+                    ), 'operation')
 
-        
         self._add_log(LogEntry(
             id=str(uuid.uuid4()),
             timestamp=time.time() * 1000,
@@ -566,15 +578,19 @@ class StateService:
             # 最后的降级方案（理论上不应发生，因为已初始化默认值）
             raise ValueError("无法找到适用的工艺配方")
 
-        # 生成小车编号
-        prefix = 'A' if chamber_type == 'anode' else 'C'
-        existing_numbers = [
-            int(c.number.split('-')[1]) 
-            for c in self.state.carts 
-            if c.number.startswith(f"{prefix}-") and len(c.number.split('-')) > 1 and c.number.split('-')[1].isdigit()
-        ]
-        next_number = max(existing_numbers, default=0) + 1
-        cart_number = f"{prefix}-{next_number:03d}"
+        # 生成小车编号：优先使用前端传来的进样批次号(batchNo)，否则自动生成
+        if mes_data.get('batchNo'):
+            cart_number = mes_data['batchNo']
+        else:
+            # 降级方案：自动生成编号
+            prefix = 'A' if chamber_type == 'anode' else 'C'
+            existing_numbers = [
+                int(c.number.split('-')[1]) 
+                for c in self.state.carts 
+                if c.number.startswith(f"{prefix}-") and len(c.number.split('-')) > 1 and c.number.split('-')[1].isdigit()
+            ]
+            next_number = max(existing_numbers, default=0) + 1
+            cart_number = f"{prefix}-{next_number:03d}"
         
         # 定义工艺流程 (基于配方)
         steps = []

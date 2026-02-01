@@ -1,8 +1,10 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, ArrowLeft, ArrowRight, Truck, Timer, MapPin, Thermometer, Zap, FlaskConical, Package, Edit2, Check, Trash2 } from 'lucide-react';
 import type { Cart, LineData } from '../types';
 import { useToast } from '../context/ToastContext';
+import { useKeyboardShortcut } from '../hooks/useKeyboardShortcut';
+import { Kbd } from './Kbd';
 
 interface CartControlModalProps {
     cart: Cart | null;
@@ -12,6 +14,9 @@ interface CartControlModalProps {
     onUpdateCart?: (cartId: string, updates: Partial<Cart>) => Promise<any>;
     onDelete?: (cartId: string) => void;
 }
+
+// ... (isValidNumber, formatTemperature, formatVacuum, formatFullDateTime, formatStepTime implementations same as before) ...
+// (I will omit the full implementations here to save lines, but keep the exports/definitions)
 
 // 校验数值是否有效
 const isValidNumber = (value: any): value is number => {
@@ -85,6 +90,23 @@ export const CartControlModal = ({ cart, lines, onClose, onMove, onUpdateCart, o
     const [isEditingName, setIsEditingName] = useState(false);
     const [editedName, setEditedName] = useState(cart?.name || '');
     const { showToast } = useToast();
+
+    // 快捷键处理
+    useKeyboardShortcut([
+        { key: 'Escape', handler: onClose },
+        {
+            key: 'ArrowLeft',
+            handler: () => {
+                if (cart) onMove(cart.id, 'backward');
+            }
+        },
+        {
+            key: 'ArrowRight',
+            handler: () => {
+                if (cart) onMove(cart.id, 'forward');
+            }
+        }
+    ], !!cart, !isEditingName && !isEditingNumber);
 
     // Sync state when cart changes
     useEffect(() => {
@@ -224,9 +246,9 @@ export const CartControlModal = ({ cart, lines, onClose, onMove, onUpdateCart, o
                                     </div>
                                 ) : (
                                     <div className="flex items-center gap-2 group/num">
-                                        <span className="text-[11px] font-black text-sky-500 dark:text-sky-400 tracking-widest">{cart.number}</span>
+                                        <span className="text-[11px] font-black text-sky-500 dark:text-sky-400 tracking-widest">{cart.batchNo || cart.number}</span>
                                         <button
-                                            onClick={() => { setEditedNumber(cart.number); setIsEditingNumber(true); }}
+                                            onClick={() => { setEditedNumber(cart.batchNo || cart.number); setIsEditingNumber(true); }}
                                             className="p-0.5 opacity-0 group-hover/num:opacity-100 hover:bg-muted dark:hover:bg-white/10 rounded transition-all"
                                         >
                                             <Edit2 className="w-2.5 h-2.5 text-muted-foreground dark:text-slate-500 hover:text-sky-500 dark:hover:text-sky-400" />
@@ -394,21 +416,31 @@ export const CartControlModal = ({ cart, lines, onClose, onMove, onUpdateCart, o
                         {/* 移动控制 */}
                         <div className="space-y-2">
                             <h3 className="text-[9px] text-muted-foreground dark:text-slate-500 font-bold uppercase tracking-widest">移动控制</h3>
-                            <div className="grid grid-cols-2 gap-3">
-                                <button
-                                    onClick={() => onMove(cart.id, 'backward')}
-                                    className="h-11 flex items-center justify-center gap-2 bg-muted/80 dark:bg-slate-800 hover:bg-muted dark:hover:bg-slate-700 active:bg-slate-200 dark:active:bg-slate-600 border border-border dark:border-white/10 hover:border-sky-500/50 rounded-lg transition-all group cursor-pointer"
-                                >
-                                    <ArrowLeft className="w-4 h-4 text-muted-foreground dark:text-slate-400 group-hover:text-sky-500 dark:group-hover:text-sky-400 transition-colors" />
-                                    <span className="font-bold text-sm text-foreground dark:text-slate-300 group-hover:text-foreground dark:group-hover:text-white">后退</span>
-                                </button>
-                                <button
-                                    onClick={() => onMove(cart.id, 'forward')}
-                                    className="h-11 flex items-center justify-center gap-2 bg-sky-600 hover:bg-sky-500 active:bg-sky-700 border border-transparent shadow-lg shadow-sky-500/20 rounded-lg transition-all group cursor-pointer"
-                                >
-                                    <span className="font-bold text-sm text-white">前进</span>
-                                    <ArrowRight className="w-4 h-4 text-white/70 group-hover:text-white group-hover:translate-x-1 transition-transform" />
-                                </button>
+                            <div className="flex gap-4">
+                                <div className="relative group w-full">
+                                    <button
+                                        onClick={() => onMove(cart.id, 'backward')}
+                                        className="w-full h-11 flex items-center justify-center gap-2 bg-muted/80 dark:bg-slate-800 hover:bg-muted dark:hover:bg-slate-700 active:bg-slate-200 dark:active:bg-slate-600 border border-border dark:border-white/10 hover:border-sky-500/50 rounded-lg transition-all cursor-pointer"
+                                    >
+                                        <ArrowLeft className="w-4 h-4 text-muted-foreground dark:text-slate-400 group-hover:text-sky-500 dark:group-hover:text-sky-400 transition-colors" />
+                                        <span className="font-bold text-sm text-foreground dark:text-slate-300 group-hover:text-foreground dark:group-hover:text-white">后退</span>
+                                    </button>
+                                    <div className="absolute top-full left-1/2 -translate-x-1/2 pt-1 pointer-events-none">
+                                        <Kbd variant="ghost" className="opacity-0 group-hover:opacity-100 transition-all translate-y-1 group-hover:translate-y-0 scale-75">←</Kbd>
+                                    </div>
+                                </div>
+                                <div className="relative group w-full">
+                                    <button
+                                        onClick={() => onMove(cart.id, 'forward')}
+                                        className="w-full h-11 flex items-center justify-center gap-2 bg-sky-600 hover:bg-sky-500 active:bg-sky-700 border border-transparent shadow-lg shadow-sky-500/20 rounded-lg transition-all cursor-pointer"
+                                    >
+                                        <span className="font-bold text-sm text-white">前进</span>
+                                        <ArrowRight className="w-4 h-4 text-white/70 group-hover:text-white group-hover:translate-x-1 transition-transform" />
+                                    </button>
+                                    <div className="absolute top-full left-1/2 -translate-x-1/2 pt-1 pointer-events-none">
+                                        <Kbd variant="ghost" className="opacity-0 group-hover:opacity-100 transition-all translate-y-1 group-hover:translate-y-0 scale-75">→</Kbd>
+                                    </div>
+                                </div>
                             </div>
                             <p className="text-[9px] text-muted-foreground dark:text-slate-500 text-center">
                                 * 移动需满足：(1) 路径上的插板阀已打开 (2) 目标腔体无车

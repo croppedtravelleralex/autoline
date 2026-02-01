@@ -61,7 +61,7 @@ const ChamberRow = ({
         <div className="space-y-2">
             <div className="flex items-center gap-4 px-2">
                 <div className="flex items-center gap-3">
-                    <div className="h-5 w-1 bg-sky-500 shadow-[0_0_10px_rgba(14,165,233,0.8)]" />
+                    <div className="h-5 w-1 bg-gradient-to-b from-sky-400 to-sky-600 shadow-[0_0_12px_rgba(14,165,233,0.6)] rounded-full" />
                     <h2 className="text-lg font-bold tracking-widest text-foreground/90 dark:text-white/90">{lineIndex}#{title}</h2>
                 </div>
 
@@ -95,7 +95,7 @@ const ChamberRow = ({
             </div>
 
             <div className="overflow-x-auto pb-4 pt-2 scrollbar-thin scrollbar-thumb-sky-500/20 dark:scrollbar-thumb-sky-900/50 scrollbar-track-transparent">
-                <div className="flex gap-0.5 items-center min-w-max px-2">
+                <div className="flex gap-1 items-center min-w-max px-2">
                     {chambers.map((chamber, index) => {
                         const chamberCarts = carts.filter(c => c.locationChamberId === chamber.id);
                         const isLast = index === chambers.length - 1;
@@ -172,14 +172,14 @@ export const LineSection = ({
     return (
         <div className="space-y-4">
             {/* 线体级别的标题栏和回溯按钮 */}
-            <div className="flex items-center gap-3 px-2 pb-2 border-b border-white/10">
-                <div className="flex items-center gap-2">
-                    <div className="w-8 h-8 rounded-lg bg-sky-500/20 flex items-center justify-center">
-                        <span className="text-sky-400 font-bold text-sm">{lineIndex}#</span>
+            <div className="flex items-center gap-3 px-4 py-3 border-b border-glow-subtle bg-surface-1 rounded-t-xl panel-shine">
+                <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-sky-500/20 to-sky-600/10 flex items-center justify-center border border-sky-500/30 shadow-[0_0_15px_rgba(14,165,233,0.2)]">
+                        <span className="text-sky-400 font-black text-base">{lineIndex}#</span>
                     </div>
                     <div>
                         <h2 className="text-base font-bold text-white/90">{line.name}</h2>
-                        <p className="text-[10px] text-slate-500">阳极 + 阴极</p>
+                        <p className="text-[10px] text-slate-500 font-medium">阳极 + 阴极 双线体</p>
                     </div>
                 </div>
 
@@ -190,7 +190,7 @@ export const LineSection = ({
                     onClick={togglePlayback}
                 />
 
-                <div className="ml-auto px-2 py-0.5 rounded border border-emerald-500/30 bg-emerald-500/10 text-[9px] text-emerald-600 dark:text-emerald-400 font-mono">
+                <div className="ml-auto px-3 py-1 rounded-lg border border-emerald-500/30 bg-emerald-500/10 text-[10px] text-emerald-600 dark:text-emerald-400 font-bold">
                     {isPlaybackActive ? '⏪ 历史回溯模式' : '✓ 实时运行中'}
                 </div>
             </div>

@@ -1,3 +1,4 @@
+import os
 from fastapi import FastAPI
 # Trigger reload update
 from fastapi.middleware.cors import CORSMiddleware

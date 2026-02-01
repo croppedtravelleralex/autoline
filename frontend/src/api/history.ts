@@ -2,7 +2,7 @@
  * 历史数据API调用模块
  */
 
-const API_BASE_URL = 'http://localhost:8000/api';
+const API_BASE_URL = '/api';
 
 export interface HistoryDataPoint {
     timestamp: number;
