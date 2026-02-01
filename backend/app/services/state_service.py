@@ -11,6 +11,7 @@ from app.models import (
     LineData,
     SystemState,
     LogEntry,
+    InspectionRecord,
 )
 
 # Simple in-memory singleton service
@@ -99,7 +100,7 @@ class StateService:
         self.state = SystemState(
             lines=[
                 LineData(
-                    id='line-1', 
+                    id='1#', 
                     name='1号线', 
                     anodeChambers=anode_chambers,
                     cathodeChambers=cathode_chambers
@@ -118,6 +119,16 @@ class StateService:
                     level='info'
                 )
             ],
+            inspectionHistory=[
+                InspectionRecord(
+                    id=str(uuid.uuid4()),
+                    timestamp=(time.time() - 3600) * 1000,
+                    type='manual',
+                    score=100.0,
+                    status='passed',
+                    summary='全线设备健康，真空度与温度指标正常。'
+                )
+            ]
         )
 
     def get_state(self) -> SystemState:
@@ -146,6 +157,86 @@ class StateService:
     def clear_operation_logs(self):
         self.state.operationLogs = []
         return True
+
+    def add_inspection_record(self, type: str = 'manual') -> InspectionRecord:
+        """执行一次点检并生成记录"""
+        from app.services.history_service import get_history_service
+        
+        # 1. 收集所有腔体和载具
+        all_chambers = []
+        for line in self.state.lines:
+            all_chambers.extend(line.anodeChambers)
+            all_chambers.extend(line.cathodeChambers)
+        
+        v_errors = []
+        v_warnings = []
+        temp_warnings = []
+        
+        for line in self.state.lines:
+            line_label = f"{line.id.replace('line', '')}#线体"
+            for c in line.anodeChambers + line.cathodeChambers:
+                if c.state == 'error':
+                    v_errors.append(c)
+                    issues.append(f"{line_label}{c.name}：当前真空度 {c.highVacPressure:.1e} Pa (严重异常)")
+                elif c.state == 'warning':
+                    v_warnings.append(c)
+                    issues.append(f"{line_label}{c.name}：当前真空度 {c.highVacPressure:.1e} Pa (波动预警)")
+                
+                if c.temperature > 110:
+                    temp_warnings.append(c)
+                    issues.append(f"{line_label}{c.name}：当前温度 {c.temperature:.1f} °C (电控过高)")
+        
+        v_score = max(0, 100 - (len(v_errors) * 15) - (len(v_warnings) * 5))
+        e_score = max(0, 100 - (len(temp_warnings) * 10))
+        
+        # 物流系统评分
+        l_errors = [cart for cart in self.state.carts if cart.status == 'abnormal']
+        l_score = max(0, 100 - (len(l_errors) * 20))
+        for cart in l_errors: issues.append(f"物流系统：载具 {cart.number} 运行异常")
+        
+        # 总分计算
+        total_score = round((v_score + e_score + l_score) / 3.0, 1)
+        status = 'passed' if total_score >= 90 else 'warning' if total_score >= 80 else 'error'
+        
+        # 生成摘要 (直接汇报具体项)
+        if not issues:
+            summary = "全线设备运行状态符合工艺标准，各项参数正常。"
+        else:
+            summary = "【异常反馈明细】\n" + "\n".join(issues)
+        
+        # 2. 生成记录
+        record = InspectionRecord(
+            id=str(uuid.uuid4()),
+            timestamp=time.time() * 1000,
+            type=type,
+            score=total_score,
+            vacuum_score=v_score,
+            electronics_score=e_score,
+            logistics_score=l_score,
+            status=status,
+            summary=summary
+        )
+        
+        # 3. 强制触发快照
+        try:
+            get_history_service().trigger_backup(self.state)
+        except Exception as e:
+            print(f"Error triggering inspection snapshot: {e}")
+
+        # 4. 存储记录
+        self.state.inspectionHistory.insert(0, record)
+        self.state.inspectionHistory = self.state.inspectionHistory[:25]
+        
+        # 记录日志
+        self._add_log(LogEntry(
+            id=str(uuid.uuid4()),
+            timestamp=record.timestamp,
+            type='operation',
+            content=f"系统执行了一次{'手动' if type == 'manual' else '自动'}点检，得分: {record.score}",
+            level='success' if status == 'passed' else 'warn'
+        ), log_type='operation')
+        
+        return record
 
     def update_chamber(self, line_id: str, chamber_id: str, updates: dict):
         print(f"[DEBUG] update_chamber called: line_id={line_id}, chamber_id={chamber_id}")
@@ -217,7 +308,15 @@ class StateService:
         return None, None, None
 
     def create_line(self, line_type: str, name: str):
-        new_id = f"line-{uuid.uuid4().hex[:8]}"
+        # 查找下一个可用序号
+        existing_numbers = []
+        for l in self.state.lines:
+            if l.id.endswith('#') and l.id[:-1].isdigit():
+                existing_numbers.append(int(l.id[:-1]))
+        next_num = max(existing_numbers, default=0) + 1
+        new_id = f"{next_num}#"
+        if not name:
+            name = f"{next_num}号线"
         # 创建带有默认腔体的新线体
         default_anode = Chamber(
             id=f"{new_id}-a-default",
@@ -327,19 +426,23 @@ class StateService:
         if not source_line:
             raise ValueError("Line not found")
         
-        # Determine new ID and Name suffix logic
-        # Simple logic: append copy timestamp or look for pattern
-        suffix = uuid.uuid4().hex[:4]
-        new_line_id = f"{source_line.id}-copy-{suffix}"
-        new_line_name = f"{source_line.name} (Copy)"
+        # 查找下一个可用序号
+        existing_numbers = []
+        for l in self.state.lines:
+            if l.id.endswith('#') and l.id[:-1].isdigit():
+                existing_numbers.append(int(l.id[:-1]))
+        next_num = max(existing_numbers, default=0) + 1
+        new_line_id = f"{next_num}#"
+        
+        # Use standard naming convention
+        new_line_name = f"{next_num}号线"
         
         # Deep copy chambers
         new_anode_chambers = []
         if source_line.anodeChambers:
             for c in source_line.anodeChambers:
-                parts = c.id.split('-')
-                base_suffix = parts[-1] if len(parts) > 1 else 'chamber'
-                new_c_id = f"{new_line_id}-a-{base_suffix}-{uuid.uuid4().hex[:4]}"
+                # Use predictable ID format for chambers as well
+                new_c_id = f"{new_line_id}-a-{uuid.uuid4().hex[:4]}"
                 new_chamber = c.model_copy(deep=True)
                 new_chamber.id = new_c_id
                 new_chamber.lineId = new_line_id
@@ -349,9 +452,7 @@ class StateService:
         new_cathode_chambers = []
         if source_line.cathodeChambers:
             for c in source_line.cathodeChambers:
-                parts = c.id.split('-')
-                base_suffix = parts[-1] if len(parts) > 1 else 'chamber'
-                new_c_id = f"{new_line_id}-c-{base_suffix}-{uuid.uuid4().hex[:4]}"
+                new_c_id = f"{new_line_id}-c-{uuid.uuid4().hex[:4]}"
                 new_chamber = c.model_copy(deep=True)
                 new_chamber.id = new_c_id
                 new_chamber.lineId = new_line_id
@@ -365,7 +466,7 @@ class StateService:
             id=str(uuid.uuid4()),
             timestamp=time.time() * 1000,
             type='system',
-            content=f"复制线体 {source_line.name} -> {new_line_name}",
+            content=f"复制线体 {source_line.name} -> {new_line_name} ({new_line_id})",
             level='success'
         ), 'system')
         return new_line

@@ -3,6 +3,8 @@ from typing import Literal
 
 from app.models import SystemState
 from app.services.state_service import StateService
+from pydantic import BaseModel
+from typing import List, Optional, Any
 
 router = APIRouter()
 
@@ -24,6 +26,11 @@ async def get_state() -> SystemState:
     """Return the full system state."""
     return state_service.get_state()
 
+@router.post("/inspect")
+async def trigger_inspection(type: str = "manual"):
+    """执行点检服务"""
+    return state_service.add_inspection_record(type)
+
 @router.post("/cart/{cart_id}/move")
 async def move_cart(cart_id: str, direction: Literal["forward", "backward"], operator_name: str = "Admin", operator_role: str = "admin"):
     """Move a cart forward or backward, respecting transfer valve state and occupancy."""
@@ -33,16 +40,18 @@ async def move_cart(cart_id: str, direction: Literal["forward", "backward"], ope
         raise HTTPException(status_code=400, detail=str(e))
     return {"message": f"Cart {cart_id} moved {direction}"}
 
+class CreateLineRequest(BaseModel):
+    type: str
+    name: str
+
 @router.post("/lines")
-async def create_line(type: str, name: str):
+async def create_line(request: CreateLineRequest):
     """Create a new line."""
     try:
-        return state_service.create_line(type, name)
+        return state_service.create_line(request.type, request.name)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
 
-from pydantic import BaseModel
-from typing import List, Optional, Any
 
 class UpdateLineRequest(BaseModel):
     name: str

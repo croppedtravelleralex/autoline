@@ -15,6 +15,14 @@ export const fetchSystemState = async (): Promise<SystemState> => {
     }
 };
 
+export const triggerInspection = async (type: 'manual' | 'auto' = 'manual'): Promise<any> => {
+    const res = await fetch(`${API_BASE}/inspect?type=${type}`, {
+        method: 'POST',
+    });
+    if (!res.ok) throw new Error("Failed to trigger inspection");
+    return res.json();
+};
+
 export const fetchSnapshotRange = async (): Promise<{ start: number | null, end: number | null }> => {
     const res = await fetch(`${API_BASE}/history/snapshots/range`);
     if (!res.ok) throw new Error("Failed to fetch range");
@@ -40,7 +48,7 @@ export const controlValve = async (
     action: 'open' | 'close'
 ) => {
     const user = JSON.parse(localStorage.getItem('user') || '{"username":"Admin","role":"admin"}');
-    const res = await fetch(`${API_BASE}/valve/${lineId}/${chamberId}/${valveName}?action=${action}&operator_name=${user.username}&operator_role=${user.role}`, {
+    const res = await fetch(`${API_BASE}/valve/${encodeURIComponent(lineId)}/${encodeURIComponent(chamberId)}/${valveName}?action=${action}&operator_name=${user.username}&operator_role=${user.role}`, {
         method: 'POST',
     });
     if (!res.ok) {
@@ -57,7 +65,7 @@ export const controlPump = async (
     action: 'on' | 'off'
 ) => {
     const user = JSON.parse(localStorage.getItem('user') || '{"username":"Admin","role":"admin"}');
-    const res = await fetch(`${API_BASE}/pump/${lineId}/${chamberId}/${pumpName}?action=${action}&operator_name=${user.username}&operator_role=${user.role}`, {
+    const res = await fetch(`${API_BASE}/pump/${encodeURIComponent(lineId)}/${encodeURIComponent(chamberId)}/${pumpName}?action=${action}&operator_name=${user.username}&operator_role=${user.role}`, {
         method: 'POST',
     });
     if (!res.ok) {
@@ -80,8 +88,10 @@ export const moveCart = async (cartId: string, direction: 'forward' | 'backward'
 };
 
 export const createLine = async (type: string, name: string) => {
-    const res = await fetch(`${API_BASE}/lines?type=${type}&name=${name}`, {
+    const res = await fetch(`${API_BASE}/lines`, {
         method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ type, name })
     });
     if (!res.ok) {
         const err = await res.json();
@@ -91,7 +101,7 @@ export const createLine = async (type: string, name: string) => {
 };
 
 export const updateLine = async (id: string, name: string, anodeChambers?: any[], cathodeChambers?: any[]) => {
-    const response = await fetch(`${API_BASE}/lines/${id}`, {
+    const response = await fetch(`${API_BASE}/lines/${encodeURIComponent(id)}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name, anode_chambers: anodeChambers, cathode_chambers: cathodeChambers })
@@ -104,7 +114,7 @@ export const updateLine = async (id: string, name: string, anodeChambers?: any[]
 };
 
 export const deleteLine = async (id: string) => {
-    const res = await fetch(`${API_BASE}/lines/${id}`, {
+    const res = await fetch(`${API_BASE}/lines/${encodeURIComponent(id)}`, {
         method: 'DELETE',
     });
     if (!res.ok) {
@@ -115,7 +125,7 @@ export const deleteLine = async (id: string) => {
 };
 
 export const duplicateLine = async (id: string) => {
-    const res = await fetch(`${API_BASE}/lines/${id}/duplicate`, {
+    const res = await fetch(`${API_BASE}/lines/${encodeURIComponent(id)}/duplicate`, {
         method: 'POST',
     });
     if (!res.ok) {
@@ -177,7 +187,7 @@ export const updateCart = async (cartId: string, updates: Partial<any>) => {
 };
 
 export const updateChamber = async (lineId: string, chamberId: string, updates: Partial<any>) => {
-    const res = await fetch(`${API_BASE}/lines/${lineId}/chambers/${chamberId}`, {
+    const res = await fetch(`${API_BASE}/lines/${encodeURIComponent(lineId)}/chambers/${encodeURIComponent(chamberId)}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(updates)

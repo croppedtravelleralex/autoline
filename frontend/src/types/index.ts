@@ -114,6 +114,18 @@ export interface LogEntry {
     level: 'info' | 'warn' | 'error' | 'success';
 }
 
+export interface InspectionRecord {
+    id: string;
+    timestamp: number;
+    type: 'manual' | 'auto';
+    score: number;
+    vacuum_score: number;
+    electronics_score: number;
+    logistics_score: number;
+    status: 'passed' | 'warning' | 'error';
+    summary: string;
+}
+
 export interface SystemState {
     lines: LineData[];
     // anodeLine: LineData; // Removed
@@ -122,4 +134,5 @@ export interface SystemState {
     timestamp: number;
     systemLogs: LogEntry[];
     operationLogs: LogEntry[];
+    inspectionHistory: InspectionRecord[];
 }

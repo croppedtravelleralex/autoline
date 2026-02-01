@@ -167,6 +167,19 @@ class LogEntry(BaseModel):
     level: LogLevel = LogLevel.info
 
 
+class InspectionRecord(BaseModel):
+    """点检记录"""
+    id: str
+    timestamp: float
+    type: Literal['manual', 'auto']
+    score: float
+    vacuum_score: float = 100.0
+    electronics_score: float = 100.0
+    logistics_score: float = 100.0
+    status: Literal['passed', 'warning', 'error']
+    summary: str
+
+
 class SystemState(BaseModel):
     """系统完整状态"""
     lines: List[LineData] = []
@@ -174,6 +187,7 @@ class SystemState(BaseModel):
     timestamp: float
     systemLogs: List[LogEntry] = []
     operationLogs: List[LogEntry] = []
+    inspectionHistory: List[InspectionRecord] = []
 
 
 

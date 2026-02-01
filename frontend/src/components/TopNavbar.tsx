@@ -28,8 +28,8 @@ const NavItem = ({ to, icon: Icon, label, index }: { to: string; icon: any; labe
             className={cn(
                 "flex items-center gap-2 px-3 py-2 rounded-lg transition-all duration-300 group relative overflow-visible border",
                 active
-                    ? "bg-sky-500/10 text-sky-500 border-sky-500/50 nav-item-active-glow"
-                    : "text-muted-foreground hover:text-foreground hover:bg-muted/50 border-border/40 hover:border-border"
+                    ? "bg-sky-500/10 text-sky-500 border-sky-500/30 dark:border-sky-500/50 nav-item-active-glow"
+                    : "text-muted-foreground hover:text-foreground hover:bg-muted/50 border-border/20 dark:border-border/40 hover:border-border"
             )}
         >
             <Icon className={cn("w-4 h-4 relative z-10 transition-transform duration-300 group-hover:scale-110", active && "drop-shadow-[0_0_8px_rgba(14,165,233,0.6)]")} />
@@ -42,7 +42,7 @@ const NavItem = ({ to, icon: Icon, label, index }: { to: string; icon: any; labe
                 <div className="absolute top-full left-0 right-0 flex justify-center pt-1 pointer-events-none">
                     <Kbd
                         variant="ghost"
-                        className="opacity-0 group-hover:opacity-100 transition-all duration-300 translate-y-2 group-hover:translate-y-0 scale-75 origin-top whitespace-nowrap bg-black/40 backdrop-blur-md border-white/10"
+                        className="opacity-0 group-hover:opacity-100 transition-all duration-300 translate-y-2 group-hover:translate-y-0 scale-75 origin-top whitespace-nowrap bg-muted dark:bg-black/40 backdrop-blur-md border border-border dark:border-white/10 text-muted-foreground dark:text-white"
                     >
                         Alt+{index + 1}
                     </Kbd>

@@ -293,7 +293,7 @@ export function LineDetail() {
                     </button>
                     <div className="flex flex-col">
                         <div className="flex items-center gap-2">
-                            <span className="text-2xl font-black text-sky-400">{lineIndex}#</span>
+                            <span className="text-3xl font-black text-sky-500">{line.id}</span>
                             <input
                                 value={lineName}
                                 onChange={(e) => {
@@ -301,10 +301,10 @@ export function LineDetail() {
                                     setIsDirty(true);
                                 }}
                                 placeholder="输入线体名称..."
-                                className="bg-transparent text-2xl font-black focus:outline-none border-b-2 border-transparent focus:border-sky-500 hover:border-white/20 transition-colors uppercase tracking-wider placeholder:text-slate-600/50"
+                                className="bg-transparent text-2xl font-bold text-white placeholder-slate-600 focus:outline-none focus:ring-0 border-none w-64"
                             />
                         </div>
-                        <span className="text-xs font-mono text-slate-500">ID: {line.id}</span>
+                        <span className="text-xs font-mono text-slate-600">System ID: {line.id}</span>
                     </div>
                 </div>
                 <div className="flex items-center gap-3">

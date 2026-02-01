@@ -33,7 +33,12 @@ const generateChambers = (line: 'anode' | 'cathode'): Chamber[] => {
                 },
                 molecularPump: false,
                 roughingPump: false,
-                hasCart: false
+                hasCart: false,
+                cartIds: [],
+                outerTemperature: 25,
+                maxCartCapacity: 1,
+                targetTemperature: 25,
+                isHeating: false
             });
         });
     } else {
@@ -63,7 +68,12 @@ const generateChambers = (line: 'anode' | 'cathode'): Chamber[] => {
                 },
                 molecularPump: false,
                 roughingPump: false,
-                hasCart: false
+                hasCart: false,
+                cartIds: [],
+                outerTemperature: 25,
+                maxCartCapacity: 1,
+                targetTemperature: 25,
+                isHeating: false
             });
         });
     }
@@ -121,5 +131,18 @@ export const initialSystemState: SystemState = {
     ],
     operationLogs: [
         { id: 'op-1', timestamp: Date.now() - 20000, type: 'operation', content: '操作员 Admin 登录系统', level: 'info' }
+    ],
+    inspectionHistory: [
+        {
+            id: 'insp-1',
+            timestamp: Date.now() - 3600000,
+            type: 'manual',
+            score: 100.0,
+            vacuumScore: 100.0,
+            electronicsScore: 100.0,
+            logisticsScore: 100.0,
+            status: 'passed',
+            summary: '全线设备健康，真空度与温度指标正常。'
+        }
     ]
 };

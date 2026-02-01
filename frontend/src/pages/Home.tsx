@@ -230,14 +230,14 @@ export function Home() {
             {/* Top Area */}
             <div className="flex-1 flex flex-col md:flex-row overflow-hidden min-h-0">
                 {/* Center: Line Monitor (Scrollable) */}
-                <div className="flex-1 overflow-auto bg-background dark:bg-slate-950/20 relative scrollbar-thin scrollbar-thumb-sky-900/20 flex flex-col min-h-[50vh] md:min-h-0">
-                    <div className="absolute inset-0 bg-grid opacity-10 pointer-events-none" />
+                <div className="flex-1 overflow-auto bg-background dark:bg-slate-950/20 relative scrollbar-thin scrollbar-thumb-sky-900/10 dark:scrollbar-thumb-sky-900/20 flex flex-col min-h-[50vh] md:min-h-0">
+                    <div className="absolute inset-0 bg-grid opacity-[0.03] dark:opacity-10 pointer-events-none" />
 
                     {/* Line Management Toolbar */}
                     <div className="shrink-0 sticky top-0 z-20 bg-background/90 dark:bg-slate-950/90 backdrop-blur-sm border-b border-border dark:border-white/5">
 
                         {/* Horizontal Line Selector */}
-                        <div className="p-2 sm:p-3 flex items-center gap-3 sm:gap-6 overflow-x-auto hide-scrollbar sm:scrollbar-hide">
+                        <div className="p-2 sm:p-3 flex items-center gap-2 overflow-x-auto hide-scrollbar sm:scrollbar-hide">
                             {Array.isArray(state?.lines) && state.lines.map((line, index) => {
                                 if (!line) return null;
                                 return (
@@ -245,11 +245,10 @@ export function Home() {
                                         {/* 1# - 滚动到对应线体区域 */}
                                         <button
                                             onClick={() => setSelectedLineId(line.id)}
-                                            className={`px-3 py-1.5 text-sm sm:text-base font-bold rounded-md transition-colors cursor-pointer whitespace-nowrap shadow-lg ${selectedLineId === line.id
-                                                ? 'bg-sky-500 text-white shadow-sky-900/50'
-                                                : 'bg-card text-muted-foreground hover:bg-sky-500 hover:text-white dark:bg-sky-600 dark:text-white shadow-sm'
+                                            className={`px-2 py-1.5 text-sm sm:text-base font-bold rounded-md transition-all cursor-pointer whitespace-nowrap shadow-sm hover:shadow-md ${selectedLineId === line.id
+                                                ? 'bg-sky-500 text-white shadow-sky-500/20 dark:shadow-sky-900/50 scale-105 z-10'
+                                                : 'bg-card text-muted-foreground hover:bg-muted hover:text-foreground border border-border/50 dark:bg-sky-900/20 dark:text-sky-300 dark:border-sky-500/20 shadow-sm'
                                                 }`}
-                                            title={`${line.name} - 点击查看`}
                                         >
                                             {index + 1}#
                                         </button>
@@ -260,9 +259,9 @@ export function Home() {
                                             <button
                                                 onClick={(e) => {
                                                     e.stopPropagation();
-                                                    navigate(`/lines/${line.id}`);
+                                                    navigate(`/lines/${encodeURIComponent(line.id)}`);
                                                 }}
-                                                className="p-1 hover:bg-amber-500/20 text-muted-foreground hover:text-amber-400 rounded transition-colors cursor-pointer"
+                                                className="p-1 hover:bg-amber-500/10 dark:hover:bg-amber-500/20 text-muted-foreground hover:text-amber-600 dark:hover:text-amber-400 rounded transition-colors cursor-pointer"
                                                 title="编辑此线体 (腔体增删改移)"
                                             >
                                                 <Edit2 className="w-3.5 h-3.5" />
@@ -293,7 +292,7 @@ export function Home() {
                                                             }
                                                         });
                                                     }}
-                                                    className="p-1 hover:bg-red-500/20 text-muted-foreground hover:text-red-400 rounded transition-colors cursor-pointer"
+                                                    className="p-1 hover:bg-red-500/10 dark:hover:bg-red-500/20 text-muted-foreground hover:text-red-600 dark:hover:text-red-400 rounded transition-colors cursor-pointer"
                                                     title="删除此线体"
                                                 >
                                                     <Trash2 className="w-3.5 h-3.5" />

@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useCallback, useEffect, useMemo, type ReactNode } from 'react';
-import type { SystemState, LineType, Cart } from '../types';
+import type { SystemState, LineType, Cart, InspectionRecord } from '../types';
 import { initialSystemState } from '../data/mockData';
 import { fetchSystemState, controlValve, controlPump, moveCart as apiMoveCart } from '../services/api';
 
@@ -25,6 +25,7 @@ interface SystemStateContextType {
         setPlaybackTime: (lineId: string | 'all', timestamp: number) => Promise<void>;
         setLineSync: (lineId: string, synchronized: boolean) => void;
         clearLinePlayback: (lineId: string) => void;
+        triggerInspection: (type?: 'manual' | 'auto') => Promise<InspectionRecord>;
     };
 }
 
@@ -69,7 +70,7 @@ export function SystemStateProvider({ children }: { children: ReactNode }) {
             const derivedState = {
                 ...initialSystemState,
                 ...realState,
-                lines: safeLines.map(line => {
+                lines: safeLines.map((line: any) => {
                     if (!line || !line.id) return line;
                     const snap = playbackSnapshots?.[line.id];
                     if (snap && !snap.isMissing && snap.line) {
@@ -203,6 +204,13 @@ export function SystemStateProvider({ children }: { children: ReactNode }) {
         await refreshState();
     }, [refreshState]);
 
+    const handleTriggerInspection = useCallback(async (type: 'manual' | 'auto' = 'manual'): Promise<InspectionRecord> => {
+        const { triggerInspection } = await import('../services/api');
+        const record = await triggerInspection(type);
+        await refreshState();
+        return record;
+    }, [refreshState]);
+
     const setPlaybackTime = useCallback(async (lineId: string | 'all', timestamp: number) => {
         try {
             const { fetchSnapshotAt } = await import('../services/api');
@@ -315,7 +323,8 @@ export function SystemStateProvider({ children }: { children: ReactNode }) {
                     }
                     return next;
                 });
-            }
+            },
+            triggerInspection: handleTriggerInspection,
         }
     };
 

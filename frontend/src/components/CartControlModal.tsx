@@ -76,9 +76,9 @@ const ParamRow = ({ label, value, unit, highlight }: { label: string; value: str
 
     return (
         <div className="flex justify-between items-center py-0.5">
-            <span className="text-[10px] text-muted-foreground dark:text-slate-500">{label}</span>
-            <span className={`text-[11px] font-mono ${highlight ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-600 dark:text-slate-300'}`}>
-                {displayValue}{displayValue !== '--' && unit && <span className="text-muted-foreground dark:text-slate-500 ml-0.5">{unit}</span>}
+            <span className="text-[10px] text-muted-foreground dark:text-slate-500 font-medium">{label}</span>
+            <span className={`text-[11px] font-mono ${highlight ? 'text-sky-600 dark:text-sky-400 font-bold' : 'text-foreground/80 dark:text-slate-300'}`}>
+                {displayValue}{displayValue !== '--' && unit && <span className="text-[9px] text-muted-foreground/60 dark:text-slate-500 ml-0.5">{unit}</span>}
             </span>
         </div>
     );

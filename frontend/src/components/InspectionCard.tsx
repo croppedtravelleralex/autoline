@@ -63,7 +63,7 @@ export const InspectionCard: React.FC<InspectionCardProps> = ({
                             "text-lg font-black tracking-tighter",
                             isError ? "text-red-400" : isWarning ? "text-orange-400" : "text-white"
                         )}>
-                            {metricValue || (isError ? 'FAIL' : 'PASS')}
+                            {metricValue || (isError ? '异常' : isWarning ? '警告' : '正常')}
                         </span>
                         {metricUnit && <span className="text-[9px] font-bold text-slate-600">{metricUnit}</span>}
                     </div>
@@ -82,9 +82,9 @@ export const InspectionCard: React.FC<InspectionCardProps> = ({
                         />
                     </div>
                     <div className="flex justify-between text-[7px] font-bold text-slate-600 uppercase tracking-widest">
-                        <span>Status</span>
+                        <span>健康分</span>
                         <span className={isError ? "text-red-500" : isWarning ? "text-orange-500" : "text-emerald-500"}>
-                            {isError ? 'Abnormal' : isWarning ? 'Warning' : 'Normal'}
+                            {isError ? '故障' : isWarning ? '警告' : '正常'}
                         </span>
                     </div>
                 </div>
@@ -110,9 +110,9 @@ export const InspectionCard: React.FC<InspectionCardProps> = ({
                 </div>
                 <div className={cn(
                     "px-1.5 py-0.5 rounded-md text-[9px] font-black border",
-                    isError ? "bg-red-500/10 border-red-500/30 text-red-500" : "bg-emerald-500/10 border-emerald-500/30 text-emerald-500"
+                    isError ? "bg-red-500/10 border-red-500/30 text-red-500" : isWarning ? "bg-orange-500/10 border-orange-500/30 text-orange-500" : "bg-emerald-500/10 border-emerald-500/30 text-emerald-500"
                 )}>
-                    {isError ? 'ERROR' : 'NORMAL'}
+                    {isError ? '异常' : isWarning ? '预警' : '正常'}
                 </div>
             </div>
 
@@ -122,11 +122,11 @@ export const InspectionCard: React.FC<InspectionCardProps> = ({
 
             <div className="grid grid-cols-2 gap-3">
                 <div className="bg-white/5 p-2 rounded-lg">
-                    <div className="text-[8px] font-bold text-slate-500 mb-1">VALUE</div>
+                    <div className="text-[8px] font-bold text-slate-500 mb-1">数值 (VALUE)</div>
                     <div className="text-sm font-mono font-black text-white">{metricValue || '--'}</div>
                 </div>
                 <div className="bg-white/5 p-2 rounded-lg">
-                    <div className="text-[8px] font-bold text-slate-500 mb-1">UNIT</div>
+                    <div className="text-[8px] font-bold text-slate-500 mb-1">单位 (UNIT)</div>
                     <div className="text-sm font-mono font-black text-slate-400">{metricUnit || '--'}</div>
                 </div>
             </div>

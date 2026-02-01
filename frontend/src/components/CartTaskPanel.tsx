@@ -34,14 +34,14 @@ export const CartTaskPanel = ({ carts, lines }: { carts: Cart[], lines: LineData
                             {lineCarts.map(cart => (
                                 <div
                                     key={cart.id}
-                                    className="bg-muted/40 dark:bg-slate-900/50 rounded px-1.5 py-1 border border-border dark:border-white/5 flex items-center gap-1.5 group/item hover:border-sky-500/20 transition-colors cursor-pointer"
+                                    className="bg-muted/30 dark:bg-slate-900/50 rounded px-1.5 py-1 border border-border dark:border-white/5 flex items-center gap-1.5 group/item hover:border-sky-500/30 hover:bg-muted/50 transition-all cursor-pointer"
                                 >
                                     {/* 左侧：状态指示器 + 编号 */}
-                                    <div className="w-0.5 h-4 bg-sky-500/30 rounded-full group-hover/item:bg-sky-500 transition-colors flex-shrink-0" />
+                                    <div className="w-0.5 h-4 bg-sky-500/20 dark:bg-sky-500/30 rounded-full group-hover/item:bg-sky-500 transition-colors flex-shrink-0" />
                                     <span className="text-[10px] font-black text-sky-600 dark:text-sky-400 font-mono w-10 flex-shrink-0">{cart.number}</span>
 
                                     {/* 中间：当前任务 - 可截断 */}
-                                    <span className="text-[9px] text-muted-foreground dark:text-slate-400 truncate flex-1 min-w-0">{cart.currentTask}</span>
+                                    <span className="text-[9px] text-foreground/80 dark:text-slate-400 truncate flex-1 min-w-0 font-medium">{cart.currentTask}</span>
 
                                     {/* 右侧：待办任务 */}
                                     <div className="flex items-center gap-1 flex-shrink-0">

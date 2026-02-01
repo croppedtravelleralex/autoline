@@ -73,25 +73,25 @@ export const LineEditorModal = ({ isOpen, onClose, lines, onRefresh }: LineEdito
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.95 }}
-                className="w-full max-w-2xl bg-slate-900 border border-slate-700 rounded-xl shadow-2xl overflow-hidden"
+                className="w-full max-w-2xl bg-card dark:bg-slate-900 border border-border dark:border-slate-700 rounded-xl shadow-2xl overflow-hidden"
             >
-                <div className="flex items-center justify-between p-4 border-b border-slate-700 bg-slate-950/50">
-                    <h2 className="text-lg font-bold text-white tracking-wide">线体管理 / Line Editor</h2>
-                    <button onClick={onClose} className="p-1 hover:bg-slate-800 rounded-full transition-colors">
-                        <X className="w-5 h-5 text-slate-400" />
+                <div className="flex items-center justify-between p-4 border-b border-border dark:border-slate-700 bg-muted/30 dark:bg-slate-950/50">
+                    <h2 className="text-lg font-bold text-foreground dark:text-white tracking-wide">线体管理 / Line Editor</h2>
+                    <button onClick={onClose} className="p-1 hover:bg-muted dark:hover:bg-slate-800 rounded-full transition-colors">
+                        <X className="w-5 h-5 text-muted-foreground dark:text-slate-400" />
                     </button>
                 </div>
 
                 <div className="p-6 space-y-6 max-h-[70vh] overflow-y-auto">
                     {/* Add New Line Section */}
                     {isAdding ? (
-                        <div className="bg-slate-800/50 rounded-lg p-4 border border-slate-700 space-y-3">
-                            <h3 className="text-sm font-semibold text-sky-400">新增线体</h3>
+                        <div className="bg-muted/30 dark:bg-slate-800/50 rounded-lg p-4 border border-border dark:border-slate-700 space-y-3">
+                            <h3 className="text-sm font-semibold text-sky-600 dark:text-sky-400">新增线体</h3>
                             <div className="flex gap-3">
                                 <select
                                     value={newLineType}
                                     onChange={e => setNewLineType(e.target.value)}
-                                    className="bg-slate-950 border border-slate-700 rounded px-3 py-2 text-sm text-white focus:outline-none focus:border-sky-500"
+                                    className="bg-background dark:bg-slate-950 border border-border dark:border-slate-700 rounded px-3 py-2 text-sm text-foreground dark:text-white focus:outline-none focus:border-sky-500"
                                 >
                                     <option value="anode">阳极线基础结构 (Anode Base)</option>
                                     <option value="cathode">阴极线基础结构 (Cathode Base)</option>
@@ -101,7 +101,7 @@ export const LineEditorModal = ({ isOpen, onClose, lines, onRefresh }: LineEdito
                                     placeholder="输入线体名称..."
                                     value={newLineName}
                                     onChange={e => setNewLineName(e.target.value)}
-                                    className="flex-1 bg-slate-950 border border-slate-700 rounded px-3 py-2 text-sm text-white focus:outline-none focus:border-sky-500"
+                                    className="flex-1 bg-background dark:bg-slate-950 border border-border dark:border-slate-700 rounded px-3 py-2 text-sm text-foreground dark:text-white focus:outline-none focus:border-sky-500 placeholder:text-muted-foreground dark:placeholder:text-slate-600"
                                 />
                                 <button onClick={handleCreate} className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded text-sm font-medium transition-colors">
                                     创建
@@ -123,54 +123,56 @@ export const LineEditorModal = ({ isOpen, onClose, lines, onRefresh }: LineEdito
 
                     {/* Line List */}
                     <div className="space-y-3">
-                        {lines.map(line => (
-                            <div key={line.id} className="bg-slate-800/30 rounded-lg p-4 border border-slate-700 flex items-center justify-between group hover:border-slate-600 transition-colors">
-                                {editingId === line.id ? (
-                                    <div className="flex-1 flex gap-3 mr-4">
+                        {lines.map((line, idx) => (
+                            <div
+                                key={line.id}
+                                className="flex items-center justify-between p-3 bg-muted/20 dark:bg-slate-800/30 border border-border dark:border-slate-700/50 rounded-lg group hover:border-sky-500/30 transition-all"
+                            >
+                                <div className="flex items-center gap-3">
+                                    <div className="w-8 h-8 rounded-full bg-sky-500/10 dark:bg-sky-500/20 flex items-center justify-center text-xs font-bold text-sky-600 dark:text-sky-400">
+                                        {idx + 1}
+                                    </div>
+                                    {editingId === line.id ? (
                                         <input
+                                            autoFocus
                                             value={editName}
                                             onChange={e => setEditName(e.target.value)}
-                                            className="flex-1 bg-slate-950 border border-sky-500 rounded px-3 py-1.5 text-sm text-white focus:outline-none"
-                                            autoFocus
+                                            className="bg-background dark:bg-slate-950 border border-sky-500 rounded px-2 py-1 text-sm text-foreground dark:text-white outline-none"
                                         />
-                                        <button onClick={() => handleUpdate(line.id)} className="p-1.5 bg-emerald-500/10 text-emerald-400 rounded hover:bg-emerald-500/20">
+                                    ) : (
+                                        <div className="flex flex-col">
+                                            <span className="text-sm font-bold text-foreground dark:text-slate-200">{line.name}</span>
+                                            <span className="text-[10px] text-muted-foreground dark:text-slate-500 uppercase tracking-wider">{line.id}</span>
+                                        </div>
+                                    )}
+                                </div>
+
+                                <div className="flex items-center gap-2">
+                                    {editingId === line.id ? (
+                                        <button
+                                            onClick={() => handleUpdate(line.id)}
+                                            className="p-1.5 bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/30 rounded transition-colors"
+                                        >
                                             <Save className="w-4 h-4" />
                                         </button>
-                                        <button onClick={() => setEditingId(null)} className="p-1.5 bg-slate-700 text-slate-300 rounded hover:bg-slate-600">
-                                            <X className="w-4 h-4" />
+                                    ) : (
+                                        <button
+                                            onClick={() => {
+                                                setEditingId(line.id);
+                                                setEditName(line.name);
+                                            }}
+                                            className="p-1.5 hover:bg-muted dark:hover:bg-slate-700 text-muted-foreground dark:text-slate-400 hover:text-foreground dark:hover:text-white rounded transition-colors"
+                                        >
+                                            <Edit2 className="w-4 h-4" />
                                         </button>
-                                    </div>
-                                ) : (
-                                    <div className="flex-1">
-                                        <div className="flex items-center gap-3">
-                                            <h3 className="font-bold text-white text-lg">{line.name}</h3>
-                                            <span className="text-xs font-mono text-slate-500 bg-slate-900 px-1.5 py-0.5 rounded border border-slate-800">{line.id}</span>
-                                        </div>
-                                        <div className="text-xs text-slate-500 mt-1">
-                                            {(line.anodeChambers?.length || 0) + (line.cathodeChambers?.length || 0)} 个腔体
-                                        </div>
-                                    </div>
-                                )}
-
-                                <div className="flex items-center gap-2 opacity-60 group-hover:opacity-100 transition-opacity">
+                                    )}
                                     <button
                                         onClick={() => handleDuplicate(line.id)}
-                                        title="复制线体"
-                                        className="p-2 hover:bg-sky-500/10 text-slate-400 hover:text-sky-400 rounded transition-colors"
+                                        className="p-1.5 hover:bg-sky-500/20 text-muted-foreground dark:text-slate-400 hover:text-sky-600 dark:hover:text-sky-400 rounded transition-colors"
+                                        title="克隆线体"
                                     >
                                         <Copy className="w-4 h-4" />
                                     </button>
-                                    <button
-                                        onClick={() => {
-                                            setEditingId(line.id);
-                                            setEditName(line.name);
-                                        }}
-                                        title="重命名"
-                                        className="p-2 hover:bg-amber-500/10 text-slate-400 hover:text-amber-400 rounded transition-colors"
-                                    >
-                                        <Edit2 className="w-4 h-4" />
-                                    </button>
-
                                 </div>
                             </div>
                         ))}

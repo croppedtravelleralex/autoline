@@ -38,17 +38,17 @@ export const CartProgressPanel = ({ carts, lines }: { carts: Cart[], lines: Line
                                         <span className="font-mono text-emerald-600 dark:text-emerald-400 font-bold w-10 flex-shrink-0">{cart.number}</span>
                                         <div className="flex items-center gap-1.5 text-muted-foreground dark:text-slate-500 flex-1 min-w-0">
                                             <span className="truncate">{cart.totalTime}</span>
-                                            <span className="text-muted-foreground/50 dark:text-slate-600">|</span>
-                                            <span className="text-sky-600 dark:text-sky-400 truncate">剩{cart.remainingTime}</span>
+                                            <span className="text-muted-foreground/30 dark:text-slate-600">|</span>
+                                            <span className="text-sky-600 dark:text-sky-400 font-medium truncate">剩{cart.remainingTime}</span>
                                         </div>
                                         <span className="font-mono text-emerald-500/80 dark:text-emerald-300/80 font-semibold flex-shrink-0">
                                             {cart.progress?.toFixed(0)}%
                                         </span>
                                     </div>
                                     {/* 第二行：进度条 - 更细更紧凑 */}
-                                    <div className="h-1 w-full bg-muted dark:bg-slate-800/80 rounded-full overflow-hidden">
+                                    <div className="h-1 w-full bg-muted/80 dark:bg-slate-800/80 rounded-full overflow-hidden border border-border/10 dark:border-transparent">
                                         <motion.div
-                                            className="h-full bg-gradient-to-r from-sky-500 to-emerald-500"
+                                            className="h-full bg-gradient-to-r from-sky-400 to-emerald-500"
                                             initial={{ width: 0 }}
                                             animate={{ width: `${cart.progress || 0}%` }}
                                             transition={{ duration: 0.8 }}

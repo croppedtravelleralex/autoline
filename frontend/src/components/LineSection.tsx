@@ -61,7 +61,7 @@ const ChamberRow = ({
         <div className="space-y-2">
             <div className="flex items-center gap-4 px-2">
                 <div className="flex items-center gap-3">
-                    <div className="h-5 w-1 bg-gradient-to-b from-sky-400 to-sky-600 shadow-[0_0_12px_rgba(14,165,233,0.6)] rounded-full" />
+                    <div className="h-5 w-1 bg-gradient-to-b from-sky-400 to-sky-600 shadow-[0_0_12px_rgba(14,165,233,0.3)] dark:shadow-[0_0_12px_rgba(14,165,233,0.6)] rounded-full" />
                     <h2 className="text-lg font-bold tracking-widest text-foreground/90 dark:text-white/90">{lineIndex}#{title}</h2>
                 </div>
 
@@ -70,31 +70,31 @@ const ChamberRow = ({
                     <button
                         onClick={() => canLoad && onCartOperation(lineId, loadChamber.id, 'load')}
                         disabled={!canLoad}
-                        className={`text-xs px-2 py-0.5 rounded border transition-all ${canLoad
-                            ? "border-emerald-500/50 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/20 cursor-pointer"
-                            : "border-border dark:border-slate-700 bg-muted/50 dark:bg-slate-800/50 text-muted-foreground dark:text-slate-600 cursor-not-allowed"
+                        className={`text-[10px] uppercase font-bold px-2 py-0.5 rounded border-2 transition-all ${canLoad
+                            ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/20 cursor-pointer"
+                            : "border-border/50 dark:border-slate-700 bg-muted/30 dark:bg-slate-800/50 text-muted-foreground/50 dark:text-slate-600 cursor-not-allowed"
                             }`}
                     >
-                        [进样]
+                        进样
                     </button>
                     <button
-                        onClick={() => canUnload && onCartOperation(lineId, unloadChamber.id, 'unload')}
+                        onClick={() => canUnload && onCartOperation(lineId, loadChamber.id, 'unload')}
                         disabled={!canUnload}
-                        className={`text-xs px-2 py-0.5 rounded border transition-all ${canUnload
-                            ? "border-amber-500/50 bg-amber-500/10 text-amber-600 dark:text-amber-400 hover:bg-amber-500/20 cursor-pointer"
-                            : "border-border dark:border-slate-700 bg-muted/50 dark:bg-slate-800/50 text-muted-foreground dark:text-slate-600 cursor-not-allowed"
+                        className={`text-[10px] uppercase font-bold px-2 py-0.5 rounded border-2 transition-all ${canUnload
+                            ? "border-amber-500/30 bg-amber-500/10 text-amber-600 dark:text-amber-400 hover:bg-amber-500/20 cursor-pointer"
+                            : "border-border/50 dark:border-slate-700 bg-muted/30 dark:bg-slate-800/50 text-muted-foreground/50 dark:text-slate-600 cursor-not-allowed"
                             }`}
                     >
-                        [出样]
+                        出样
                     </button>
                 </div>
 
-                <div className="px-2 py-0.5 rounded border border-emerald-500/30 bg-emerald-500/10 text-[9px] text-emerald-600 dark:text-emerald-400 font-mono ml-auto">
+                <div className="px-2 py-0.5 rounded border border-emerald-500/20 bg-emerald-500/5 text-[9px] text-emerald-600 dark:text-emerald-400 font-black tracking-widest ml-auto">
                     {isPlaybackActive ? '⏪ 回溯中' : '运行中 • 在线'}
                 </div>
             </div>
 
-            <div className="overflow-x-auto pb-4 pt-2 scrollbar-thin scrollbar-thumb-sky-500/20 dark:scrollbar-thumb-sky-900/50 scrollbar-track-transparent">
+            <div className="overflow-x-auto pb-4 pt-2 scrollbar-thin scrollbar-thumb-sky-500/10 hover:scrollbar-thumb-sky-500/20 dark:scrollbar-thumb-sky-900/50 scrollbar-track-transparent">
                 <div className="flex gap-1 items-center min-w-max px-2">
                     {chambers.map((chamber, index) => {
                         const chamberCarts = carts.filter(c => c.locationChamberId === chamber.id);

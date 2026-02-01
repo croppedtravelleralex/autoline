@@ -54,9 +54,9 @@ export const OperationLogPanel = ({ logs, lines, className }: OperationLogPanelP
     }, [filteredLogs]);
 
     return (
-        <div className={cn("flex flex-col h-full overflow-hidden bg-slate-950/60 backdrop-blur-md border-l border-white/5", className)}>
+        <div className={cn("flex flex-col h-full overflow-hidden bg-card dark:bg-slate-950/60 backdrop-blur-md border-l border-border dark:border-white/5", className)}>
             {/* Header with Tabs */}
-            <div className="flex flex-col border-b border-white/5 bg-white/[0.02]">
+            <div className="flex flex-col border-b border-border dark:border-white/5 bg-muted/50 dark:bg-white/[0.02]">
                 <div className="px-3 py-2 flex items-center gap-2">
                     <FileText className="w-3.5 h-3.5 text-emerald-400" />
                     <h3 className="text-[10px] font-bold uppercase tracking-widest text-emerald-400">操作日志</h3>
@@ -70,7 +70,7 @@ export const OperationLogPanel = ({ logs, lines, className }: OperationLogPanelP
                             "px-3 py-1 text-[9px] font-mono border-b-2 transition-colors whitespace-nowrap uppercase",
                             activeLineId === 'all'
                                 ? "border-emerald-500 text-emerald-400 bg-emerald-500/5"
-                                : "border-transparent text-slate-500 hover:text-slate-300 hover:bg-white/5"
+                                : "border-transparent text-muted-foreground dark:text-slate-500 hover:text-foreground dark:hover:text-slate-300 hover:bg-muted dark:hover:bg-white/5"
                         )}
                     >
                         全部
@@ -83,7 +83,7 @@ export const OperationLogPanel = ({ logs, lines, className }: OperationLogPanelP
                                 "px-3 py-1 text-[9px] font-mono border-b-2 transition-colors max-w-[80px] truncate",
                                 activeLineId === line.id
                                     ? "border-emerald-500 text-emerald-400 bg-emerald-500/5"
-                                    : "border-transparent text-slate-500 hover:text-slate-300 hover:bg-white/5"
+                                    : "border-transparent text-muted-foreground dark:text-slate-500 hover:text-foreground dark:hover:text-slate-300 hover:bg-muted dark:hover:bg-white/5"
                             )}
                             title={line.name}
                         >
@@ -105,17 +105,17 @@ export const OperationLogPanel = ({ logs, lines, className }: OperationLogPanelP
 
                     return (
                         <div key={log.id} className="flex gap-1.5 hover:bg-white/[0.03] px-2 py-1 rounded-sm transition-colors group">
-                            <span className="text-slate-600 shrink-0 group-hover:text-slate-500 transition-colors whitespace-nowrap">
+                            <span className="text-muted-foreground dark:text-slate-600 shrink-0 group-hover:text-muted-foreground/80 dark:group-hover:text-slate-500 transition-colors whitespace-nowrap">
                                 {timeStr}
                             </span>
-                            <span className="text-slate-300 break-all leading-tight opacity-90 group-hover:opacity-100">
+                            <span className="text-foreground dark:text-slate-300 break-all leading-tight opacity-90 group-hover:opacity-100">
                                 {log.content}
                             </span>
                         </div>
                     );
                 })}
                 {filteredLogs.length === 0 && (
-                    <div className="text-slate-700 italic px-2 py-4 text-center text-[9px]">
+                    <div className="text-muted-foreground dark:text-slate-700 italic px-2 py-4 text-center text-[9px]">
                         暂无{activeLineId === 'all' ? '系统' : '该线体'}操作日志
                     </div>
                 )}

@@ -83,21 +83,24 @@ export const ChamberSettingsModal = ({ chamber, onClose }: ChamberSettingsModalP
             return {
                 background: 'linear-gradient(135deg, #050810 0%, #0a1020 100%)',
                 shadow: '0 0 20px rgba(14, 165, 233, 0.15)',
-                borderColor: 'rgba(14, 165, 233, 0.3)'
+                borderColor: 'rgba(14, 165, 233, 0.3)',
+                textColor: '#f8fafc'
             };
         } else if (normalized < 0.6) {
             // 中真空 - 蓝灰渐变
             return {
                 background: 'linear-gradient(135deg, #0b1525 0%, #151d30 100%)',
                 shadow: '0 0 15px rgba(14, 165, 233, 0.1)',
-                borderColor: 'rgba(14, 165, 233, 0.2)'
+                borderColor: 'rgba(14, 165, 233, 0.2)',
+                textColor: '#f1f5f9'
             };
         } else {
-            // 低真空 - 浅灰色
+            // 低真空 - 浅灰色 (日间模式下调整为更亮的灰色)
             return {
-                background: 'linear-gradient(135deg, #1e293b 0%, #334155 100%)',
-                shadow: 'none',
-                borderColor: 'rgba(255, 255, 255, 0.1)'
+                background: 'linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%)',
+                shadow: '0 2px 4px rgba(0,0,0,0.05)',
+                borderColor: 'rgba(0,0,0,0.1)',
+                textColor: '#334155'
             };
         }
     };
@@ -233,17 +236,17 @@ export const ChamberSettingsModal = ({ chamber, onClose }: ChamberSettingsModalP
                     animate={{ opacity: 1, scale: 1, y: 0 }}
                     exit={{ opacity: 0, scale: 0.98, y: 10 }}
                     onClick={(e) => e.stopPropagation()}
-                    className="w-full md:w-[90vw] md:max-w-5xl max-h-[95vh] md:max-h-[85vh] bg-[#0b0e1b]/80 backdrop-blur-xl border border-sky-500/30 rounded-2xl shadow-[0_0_60px_rgba(14,165,233,0.15),inset_0_1px_0_rgba(255,255,255,0.05)] flex flex-col overflow-hidden m-2 sm:m-0"
+                    className="w-full md:w-[90vw] md:max-w-5xl max-h-[95vh] md:max-h-[85vh] bg-card dark:bg-[#0b0e1b]/80 backdrop-blur-xl border border-border dark:border-sky-500/30 rounded-2xl shadow-[0_0_60px_rgba(0,0,0,0.1),inset_0_1px_0_rgba(255,255,255,0.05)] dark:shadow-[0_0_60px_rgba(14,165,233,0.15),inset_0_1px_0_rgba(255,255,255,0.05)] flex flex-col overflow-hidden m-2 sm:m-0"
                 >
-                    <header className="bg-chamber-header h-10 flex items-center justify-between px-3 shrink-0 relative">
+                    <header className="bg-muted/50 dark:bg-chamber-header h-10 flex items-center justify-between px-3 shrink-0 relative border-b border-border dark:border-transparent">
                         <div className="absolute inset-0 bg-grid opacity-20 pointer-events-none" />
                         <div className="flex items-center gap-4 relative z-10">
-                            <div className="w-9 h-9 rounded-lg bg-sky-500/10 flex items-center justify-center border border-sky-500/20">
-                                <Settings2 className="w-5 h-5 text-sky-500" />
+                            <div className="w-9 h-9 rounded-lg bg-sky-500/5 dark:bg-sky-500/10 flex items-center justify-center border border-sky-500/10 dark:border-sky-500/20">
+                                <Settings2 className="w-5 h-5 text-sky-600 dark:text-sky-500" />
                             </div>
                             <div className="flex flex-col">
                                 <div className="flex items-center gap-3">
-                                    <h2 className="text-sm font-bold text-white tracking-tight">{liveChamber.name} 设备详情</h2>
+                                    <h2 className="text-sm font-bold text-foreground dark:text-white tracking-tight">{liveChamber.name} 设备详情</h2>
                                     <div className="px-2 py-0.5 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-[9px] font-black text-indigo-400 uppercase tracking-widest">
                                         ID: {liveChamber.id.split('-').pop()}
                                     </div>
@@ -417,18 +420,18 @@ export const ChamberSettingsModal = ({ chamber, onClose }: ChamberSettingsModalP
                                             </div>
                                         )}
                                         <section className="space-y-1.5">
-                                            <h4 className="text-xs font-bold text-slate-500 tracking-wide">核心动力矩阵</h4>
+                                            <h4 className="text-xs font-bold text-muted-foreground dark:text-slate-500 tracking-wide">核心动力矩阵</h4>
                                             <div className="grid grid-cols-2 gap-2">
                                                 <div className={cn(
-                                                    "bg-slate-900/40 border rounded-xl p-2 flex items-center justify-between transition-all duration-300",
+                                                    "bg-muted/30 dark:bg-slate-900/40 border rounded-xl p-2 flex items-center justify-between transition-all duration-300",
                                                     liveChamber.molecularPump
-                                                        ? "border-sky-500/30 shadow-[0_0_20px_rgba(14,165,233,0.15)]"
-                                                        : "border-white/5"
+                                                        ? "border-sky-500/30 dark:border-sky-500/30 shadow-sm dark:shadow-[0_0_20px_rgba(14,165,233,0.15)]"
+                                                        : "border-border dark:border-white/5"
                                                 )}>
                                                     <div className="flex items-center gap-2">
                                                         <div className={cn(
                                                             "w-8 h-8 rounded-lg flex items-center justify-center border relative overflow-hidden",
-                                                            liveChamber.molecularPump ? "bg-sky-500/10 border-sky-500/30" : "bg-white/5 border-white/5"
+                                                            liveChamber.molecularPump ? "bg-sky-500/10 border-sky-500/30" : "bg-muted dark:bg-white/5 border-border dark:border-white/5"
                                                         )}>
                                                             {/* 脉冲波形环效果 */}
                                                             {liveChamber.molecularPump && (
@@ -443,18 +446,18 @@ export const ChamberSettingsModal = ({ chamber, onClose }: ChamberSettingsModalP
                                                             )} style={{ animationDuration: liveChamber.molecularPump ? '2s' : '0s' }} />
                                                         </div>
                                                         <div className="flex flex-col">
-                                                            <p className="text-xs font-bold text-slate-200 leading-tight">涡轮分子泵</p>
+                                                            <p className="text-xs font-bold text-foreground dark:text-slate-200 leading-tight">涡轮分子泵</p>
                                                             <div className="flex items-center gap-1.5">
-                                                                <p className="text-[10px] text-slate-500 font-medium">状态: {liveChamber.molecularPump ? '运行中' : '已停机'}</p>
+                                                                <p className="text-[10px] text-muted-foreground dark:text-slate-500 font-medium">状态: {liveChamber.molecularPump ? '运行中' : '已停机'}</p>
                                                                 {liveChamber.molecularPump && (
-                                                                    <span className="text-[10px] font-mono text-sky-400">{turboSpeed.toFixed(0)}%</span>
+                                                                    <span className="text-[10px] font-mono text-sky-600 dark:text-sky-400">{turboSpeed.toFixed(0)}%</span>
                                                                 )}
                                                             </div>
                                                             {/* 转速进度条 */}
                                                             {liveChamber.molecularPump && (
-                                                                <div className="w-16 h-1 bg-slate-800 rounded-full mt-0.5 overflow-hidden">
+                                                                <div className="w-16 h-1 bg-muted dark:bg-slate-800 rounded-full mt-0.5 overflow-hidden">
                                                                     <div
-                                                                        className="h-full bg-gradient-to-r from-sky-600 to-sky-400 rounded-full transition-all duration-300"
+                                                                        className="h-full bg-gradient-to-r from-sky-600 to-sky-400 dark:from-sky-600 dark:to-sky-400 rounded-full transition-all duration-300"
                                                                         style={{ width: `${turboSpeed}%` }}
                                                                     />
                                                                 </div>
@@ -466,25 +469,25 @@ export const ChamberSettingsModal = ({ chamber, onClose }: ChamberSettingsModalP
                                                     </button>
                                                 </div>
                                                 <div className={cn(
-                                                    "bg-slate-900/40 border rounded-xl p-2.5 flex flex-col gap-2 transition-all duration-300",
+                                                    "bg-muted/30 dark:bg-slate-900/40 border rounded-xl p-2.5 flex flex-col gap-2 transition-all duration-300",
                                                     liveChamber.isHeating
-                                                        ? "border-orange-500/30 shadow-[0_0_20px_rgba(245,158,11,0.15)]"
-                                                        : "border-white/5"
+                                                        ? "border-orange-500/30 dark:border-orange-500/30 shadow-sm dark:shadow-[0_0_20px_rgba(245,158,11,0.15)]"
+                                                        : "border-border dark:border-white/5"
                                                 )}>
                                                     <div className="flex items-center justify-between">
                                                         <div className="flex items-center gap-2">
                                                             <div className={cn(
                                                                 "w-8 h-8 rounded-lg flex items-center justify-center border relative overflow-hidden",
-                                                                liveChamber.isHeating ? "bg-orange-500/10 border-orange-500/30" : "bg-white/5 border-white/5"
+                                                                liveChamber.isHeating ? "bg-orange-500/10 border-orange-500/30" : "bg-muted dark:bg-white/5 border-border dark:border-white/5"
                                                             )}>
                                                                 <Thermometer className={cn(
                                                                     "w-4 h-4 relative z-10",
-                                                                    liveChamber.isHeating ? "text-orange-400 animate-pulse" : "text-slate-600"
+                                                                    liveChamber.isHeating ? "text-orange-500 dark:text-orange-400 animate-pulse" : "text-muted-foreground dark:text-slate-600"
                                                                 )} />
                                                             </div>
                                                             <div>
-                                                                <p className="text-xs font-bold text-slate-200 leading-tight">加热系统</p>
-                                                                <p className="text-[10px] text-slate-500 font-medium">状态: {liveChamber.isHeating ? '运行中' : '待机'}</p>
+                                                                <p className="text-xs font-bold text-foreground dark:text-slate-200 leading-tight">加热系统</p>
+                                                                <p className="text-[10px] text-muted-foreground dark:text-slate-500 font-medium">状态: {liveChamber.isHeating ? '运行中' : '待机'}</p>
                                                             </div>
                                                         </div>
                                                         <button
@@ -497,7 +500,7 @@ export const ChamberSettingsModal = ({ chamber, onClose }: ChamberSettingsModalP
                                                             }}
                                                             className={cn(
                                                                 "w-7 h-7 rounded-lg flex items-center justify-center transition-all",
-                                                                liveChamber.isHeating ? "bg-orange-600 text-white shadow-lg shadow-orange-600/30" : "bg-white/5 text-slate-600 hover:text-slate-400"
+                                                                liveChamber.isHeating ? "bg-orange-600 text-white shadow-lg shadow-orange-600/30" : "bg-muted dark:bg-white/5 text-muted-foreground dark:text-slate-600 hover:text-foreground dark:hover:text-slate-400"
                                                             )}
                                                         >
                                                             <Power size={12} />
@@ -505,7 +508,7 @@ export const ChamberSettingsModal = ({ chamber, onClose }: ChamberSettingsModalP
                                                     </div>
 
                                                     {/* 加热模式选择 */}
-                                                    <div className="flex items-center gap-1 p-0.5 bg-black/40 rounded-lg border border-white/5">
+                                                    <div className="flex items-center gap-1 p-0.5 bg-muted/50 dark:bg-black/40 rounded-lg border border-border dark:border-white/5">
                                                         {[
                                                             { id: 'off', label: '关闭' },
                                                             { id: 'manual', label: '手动' },
@@ -523,10 +526,10 @@ export const ChamberSettingsModal = ({ chamber, onClose }: ChamberSettingsModalP
                                                                 className={cn(
                                                                     "flex-1 py-1 rounded-md text-[10px] font-bold transition-all",
                                                                     liveChamber.isHeating && liveChamber.heatingMode === mode.id
-                                                                        ? "bg-orange-600/20 text-orange-400 border border-orange-500/30"
+                                                                        ? "bg-orange-600/20 text-orange-600 dark:text-orange-400 border border-orange-500/30"
                                                                         : !liveChamber.isHeating && mode.id === 'off'
-                                                                            ? "bg-slate-600/20 text-slate-400 border border-slate-500/30"
-                                                                            : "text-slate-600 hover:text-slate-400 border border-transparent"
+                                                                            ? "bg-slate-500/10 dark:bg-slate-600/20 text-slate-500 dark:text-slate-400 border border-border dark:border-slate-500/30"
+                                                                            : "text-muted-foreground dark:text-slate-600 hover:text-foreground dark:hover:text-slate-400 border border-transparent"
                                                                 )}
                                                             >
                                                                 {mode.label}
@@ -539,7 +542,7 @@ export const ChamberSettingsModal = ({ chamber, onClose }: ChamberSettingsModalP
 
                                         {isIndiumSealing && (
                                             <section className="p-5 rounded-2xl bg-indigo-500/5 border border-indigo-500/20 space-y-4">
-                                                <div className="flex items-center gap-2 font-black text-indigo-300 uppercase tracking-[0.2em] text-[10px]">
+                                                <div className="flex items-center gap-2 font-black text-indigo-600 dark:text-indigo-300 uppercase tracking-[0.2em] text-[10px]">
                                                     <Zap size={14} /> 铟封仓核心工艺控制
                                                 </div>
                                                 <button
@@ -584,8 +587,8 @@ export const ChamberSettingsModal = ({ chamber, onClose }: ChamberSettingsModalP
                                                             className={cn(
                                                                 "py-1.5 rounded-lg text-[10px] font-bold transition-all border",
                                                                 active
-                                                                    ? "bg-indigo-500/20 border-indigo-500/50 text-indigo-300 shadow-[0_0_8px_rgba(99,102,241,0.3)]"
-                                                                    : "bg-slate-900/50 border-white/5 text-slate-600 hover:text-slate-400 hover:border-white/10"
+                                                                    ? "bg-indigo-500/20 border-indigo-500/50 text-indigo-600 dark:text-indigo-300 shadow-[0_0_8px_rgba(99,102,241,0.2)] dark:shadow-[0_0_8px_rgba(99,102,241,0.3)]"
+                                                                    : "bg-muted/50 dark:bg-slate-900/50 border-border dark:border-white/5 text-muted-foreground dark:text-slate-600 hover:text-foreground dark:hover:text-slate-400 hover:border-border dark:hover:border-white/10"
                                                             )}
                                                         >
                                                             #{i + 1}
@@ -609,52 +612,52 @@ export const ChamberSettingsModal = ({ chamber, onClose }: ChamberSettingsModalP
                                 >
                                     <div className="max-w-4xl mx-auto space-y-4">
                                         <div className="flex items-center justify-between">
-                                            <h3 className="text-sm font-bold text-white flex items-center gap-2">
-                                                <Package size={16} className="text-sky-400" />
+                                            <h3 className="text-sm font-bold text-foreground dark:text-white flex items-center gap-2">
+                                                <Package size={16} className="text-sky-500" />
                                                 腔内载具分布 (当前: {state.carts.filter(c => c.locationChamberId === liveChamber.id).length}/{liveChamber.maxCartCapacity})
                                             </h3>
                                         </div>
 
                                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                             {state.carts.filter(c => c.locationChamberId === liveChamber.id).map(cart => (
-                                                <div key={cart.id} className="bg-slate-900/40 border border-white/5 rounded-xl p-3 flex flex-col gap-3 hover:border-sky-500/30 transition-all group">
+                                                <div key={cart.id} className="bg-muted/30 dark:bg-slate-900/40 border border-border dark:border-white/5 rounded-xl p-3 flex flex-col gap-3 hover:border-sky-500/30 transition-all group">
                                                     <div className="flex items-center justify-between">
                                                         <div className="flex items-center gap-2">
                                                             <div className="w-8 h-8 rounded-lg bg-sky-500/10 flex items-center justify-center border border-sky-500/20 font-black text-sky-400 text-xs shadow-lg shadow-sky-900/20">
                                                                 {cart.number}
                                                             </div>
                                                             <div>
-                                                                <p className="text-[11px] font-bold text-slate-200">{cart.name || '未命名载具'}</p>
+                                                                <p className="text-[11px] font-bold text-foreground dark:text-slate-200">{cart.name || '未命名载具'}</p>
                                                                 <div className="flex items-center gap-1">
                                                                     <div className={cn("w-1 h-1 rounded-full", cart.status === 'normal' ? "bg-emerald-500" : "bg-red-500")} />
-                                                                    <span className="text-[9px] text-slate-500 font-bold uppercase tracking-widest">{cart.status}</span>
+                                                                    <span className="text-[9px] text-muted-foreground dark:text-slate-500 font-bold uppercase tracking-widest">{cart.status}</span>
                                                                 </div>
                                                             </div>
                                                         </div>
                                                         <div className="text-right">
-                                                            <span className="block text-[8px] text-slate-500 font-black uppercase tracking-widest">预计余时</span>
-                                                            <span className="text-[10px] font-mono font-bold text-amber-400">{cart.remainingTime}</span>
+                                                            <span className="block text-[8px] text-muted-foreground dark:text-slate-500 font-black uppercase tracking-widest">预计余时</span>
+                                                            <span className="text-[10px] font-mono font-bold text-amber-600 dark:text-amber-400">{cart.remainingTime}</span>
                                                         </div>
                                                     </div>
 
                                                     <div className="space-y-1">
                                                         <div className="flex justify-between text-[10px]">
-                                                            <span className="text-slate-400 font-bold">当前任务: {cart.currentTask}</span>
-                                                            <span className="text-sky-400 font-black">{cart.progress}%</span>
+                                                            <span className="text-foreground/70 dark:text-slate-400 font-bold">当前任务: {cart.currentTask}</span>
+                                                            <span className="text-sky-600 dark:text-sky-400 font-black">{cart.progress}%</span>
                                                         </div>
-                                                        <div className="w-full h-1 bg-slate-800 rounded-full overflow-hidden">
+                                                        <div className="w-full h-1 bg-muted dark:bg-slate-800 rounded-full overflow-hidden">
                                                             <div
                                                                 className="h-full bg-gradient-to-r from-sky-600 to-sky-400 group-hover:from-sky-500 group-hover:to-cyan-400 transition-all duration-500"
                                                                 style={{ width: `${cart.progress}%` }}
                                                             />
                                                         </div>
-                                                        <p className="text-[9px] text-slate-600 font-medium italic mt-1">载荷内容: {cart.content || '无'}</p>
+                                                        <p className="text-[9px] text-muted-foreground dark:text-slate-600 font-medium italic mt-1">载荷内容: {cart.content || '无'}</p>
                                                     </div>
                                                 </div>
                                             ))}
 
                                             {state.carts.filter(c => c.locationChamberId === liveChamber.id).length === 0 && (
-                                                <div className="col-span-full py-12 flex flex-col items-center justify-center gap-2 text-slate-600 border border-dashed border-white/5 rounded-2xl bg-white/2">
+                                                <div className="col-span-full py-12 flex flex-col items-center justify-center gap-2 text-muted-foreground dark:text-slate-600 border border-dashed border-border dark:border-white/5 rounded-2xl bg-muted/20 dark:bg-white/2">
                                                     <Box size={32} strokeWidth={1} />
                                                     <p className="text-xs font-bold tracking-widest uppercase">当前腔内无在线载具</p>
                                                 </div>
@@ -676,15 +679,15 @@ export const ChamberSettingsModal = ({ chamber, onClose }: ChamberSettingsModalP
                                         {/* 维护统计仪表盘 */}
                                         <div className="grid grid-cols-3 gap-4">
                                             {[
-                                                { label: '运行总时长', value: '1248h', icon: Power, color: 'text-sky-400' },
-                                                { label: '距离下一次保养', value: '152h', icon: Calendar, color: 'text-amber-400' },
-                                                { label: '故障率 (MTBF)', value: '3.2d', icon: Activity, color: 'text-emerald-400' }
+                                                { label: '运行总时长', value: '1248h', icon: Power, color: 'text-sky-500 dark:text-sky-400' },
+                                                { label: '距离下一次保养', value: '152h', icon: Calendar, color: 'text-amber-500 dark:text-amber-400' },
+                                                { label: '故障率 (MTBF)', value: '3.2d', icon: Activity, color: 'text-emerald-500 dark:text-emerald-400' }
                                             ].map((stat, i) => (
-                                                <div key={i} className="bg-slate-900/40 border border-white/5 rounded-2xl p-4 flex flex-col gap-2 relative overflow-hidden group hover:border-white/10 transition-colors">
+                                                <div key={i} className="bg-muted/30 dark:bg-slate-900/40 border border-border dark:border-white/5 rounded-2xl p-4 flex flex-col gap-2 relative overflow-hidden group hover:border-border/50 dark:hover:border-white/10 transition-colors">
                                                     <div className="absolute -bottom-2 -right-2 opacity-5 pointer-events-none group-hover:opacity-10 transition-opacity">
                                                         <stat.icon size={64} />
                                                     </div>
-                                                    <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest">{stat.label}</span>
+                                                    <span className="text-[9px] font-black text-muted-foreground dark:text-slate-500 uppercase tracking-widest">{stat.label}</span>
                                                     <div className="flex items-baseline gap-2">
                                                         <span className={cn("text-2xl font-mono font-black", stat.color)}>{stat.value}</span>
                                                         <stat.icon size={14} className={cn("opacity-40", stat.color)} />
@@ -696,23 +699,23 @@ export const ChamberSettingsModal = ({ chamber, onClose }: ChamberSettingsModalP
                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                             {/* 异常记录 */}
                                             <div className="space-y-3">
-                                                <h4 className="text-xs font-bold text-slate-400 flex items-center gap-2 uppercase tracking-wide">
+                                                <h4 className="text-xs font-bold text-muted-foreground dark:text-slate-400 flex items-center gap-2 uppercase tracking-wide">
                                                     <Wrench size={14} /> 历史故障摘要
                                                 </h4>
                                                 <div className="space-y-2 max-h-[300px] overflow-y-auto pr-2 custom-scrollbar">
                                                     {state.systemLogs.filter(l => (l.level === 'error' || l.level === 'warn') && l.content.includes(liveChamber.name)).length > 0 ? (
                                                         state.systemLogs.filter(l => (l.level === 'error' || l.level === 'warn') && l.content.includes(liveChamber.name)).map(log => (
-                                                            <div key={log.id} className="bg-slate-950/40 border-l-2 border-red-500/50 p-2.5 rounded-r-lg flex flex-col gap-1">
+                                                            <div key={log.id} className="bg-muted/30 dark:bg-slate-950/40 border-l-2 border-red-500/50 p-2.5 rounded-r-lg flex flex-col gap-1">
                                                                 <div className="flex justify-between items-center text-[9px] font-bold">
-                                                                    <span className="text-red-400 uppercase">异常警告</span>
-                                                                    <span className="text-slate-600 font-mono">{new Date(log.timestamp * 1000).toLocaleString()}</span>
+                                                                    <span className="text-red-600 dark:text-red-400 uppercase">异常警告</span>
+                                                                    <span className="text-muted-foreground dark:text-slate-600 font-mono">{new Date(log.timestamp * 1000).toLocaleString()}</span>
                                                                 </div>
-                                                                <p className="text-[11px] text-slate-300 leading-relaxed font-medium">{log.content}</p>
+                                                                <p className="text-[11px] text-foreground/80 dark:text-slate-300 leading-relaxed font-medium">{log.content}</p>
                                                             </div>
                                                         ))
                                                     ) : (
-                                                        <div className="py-8 text-center bg-white/2 border border-white/5 rounded-xl">
-                                                            <p className="text-[10px] text-slate-600 uppercase font-black tracking-widest">无近期异常记录</p>
+                                                        <div className="py-8 text-center bg-muted/20 dark:bg-white/2 border border-border dark:border-white/5 rounded-xl">
+                                                            <p className="text-[10px] text-muted-foreground dark:text-slate-600 uppercase font-black tracking-widest">无近期异常记录</p>
                                                         </div>
                                                     )}
                                                 </div>
@@ -720,10 +723,10 @@ export const ChamberSettingsModal = ({ chamber, onClose }: ChamberSettingsModalP
 
                                             {/* 设备规格参数 */}
                                             <div className="space-y-3">
-                                                <h4 className="text-xs font-bold text-slate-400 flex items-center gap-2 uppercase tracking-wide">
+                                                <h4 className="text-xs font-bold text-muted-foreground dark:text-slate-400 flex items-center gap-2 uppercase tracking-wide">
                                                     <SettingsIcon size={14} /> 出厂技术参数
                                                 </h4>
-                                                <div className="bg-slate-950/40 rounded-xl border border-white/5 overflow-hidden">
+                                                <div className="bg-muted/20 dark:bg-slate-950/40 rounded-xl border border-border dark:border-white/5 overflow-hidden">
                                                     <table className="w-full text-left text-[10px]">
                                                         <tbody className="divide-y divide-white/5">
                                                             {[
@@ -734,9 +737,9 @@ export const ChamberSettingsModal = ({ chamber, onClose }: ChamberSettingsModalP
                                                                 { k: '分子泵转速', v: '45000 RPM' },
                                                                 { k: '上次保养日期', v: '2023-11-15' }
                                                             ].map((row, i) => (
-                                                                <tr key={i} className="hover:bg-white/5 transition-colors">
-                                                                    <td className="px-3 py-2 text-slate-500 font-bold">{row.k}</td>
-                                                                    <td className="px-3 py-2 text-slate-200 font-mono-data font-bold">{row.v}</td>
+                                                                <tr key={i} className="hover:bg-muted/50 dark:hover:bg-white/5 transition-colors">
+                                                                    <td className="px-3 py-2 text-muted-foreground dark:text-slate-500 font-bold">{row.k}</td>
+                                                                    <td className="px-3 py-2 text-foreground/80 dark:text-slate-200 font-mono-data font-bold">{row.v}</td>
                                                                 </tr>
                                                             ))}
                                                         </tbody>
@@ -750,12 +753,12 @@ export const ChamberSettingsModal = ({ chamber, onClose }: ChamberSettingsModalP
                         </AnimatePresence>
                     </div>
 
-                    <footer className="h-10 border-t border-white/5 bg-black/40 flex items-center justify-between px-6 shrink-0 text-[9px] font-bold text-slate-600 uppercase tracking-widest">
+                    <footer className="h-10 border-t border-border dark:border-white/5 bg-muted/30 dark:bg-black/40 flex items-center justify-between px-6 shrink-0 text-[9px] font-bold text-muted-foreground dark:text-slate-600 uppercase tracking-widest">
                         <div className="flex items-center gap-4">
                             <span className="flex items-center gap-1.5"><div className="w-1.5 h-1.5 rounded-full bg-emerald-500/30" /> 指挥中心实时同步已开启</span>
                             <span>精密制造控制系统 v4.1</span>
                         </div>
-                        <div className="text-slate-700 flex items-center gap-2">
+                        <div className="text-muted-foreground/50 dark:text-slate-700 flex items-center gap-2">
                             智能制造平台
                         </div>
                     </footer>

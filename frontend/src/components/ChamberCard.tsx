@@ -153,15 +153,15 @@ export const ChamberCard: React.FC<ChamberCardProps> = ({ chamber, lineId, carts
             layout
             initial={false}
             className={cn(
-                "shrink-0 min-w-[160px] max-w-[170px] bg-[#0b0e1b]/95 backdrop-blur-md border border-sky-500/20 rounded-xl shadow-2xl overflow-hidden group/card hover:border-sky-400/50 transition-all duration-300",
+                "shrink-0 min-w-[160px] max-w-[170px] bg-card dark:bg-[#0b0e1b]/95 backdrop-blur-md border border-border dark:border-sky-500/20 rounded-xl shadow-lg dark:shadow-2xl overflow-hidden group/card hover:border-primary/50 dark:hover:border-sky-400/50 transition-all duration-300",
                 isReadOnly ? "cursor-default opacity-95" : "cursor-pointer"
             )}
             onClick={() => !isReadOnly && onOpenSettings?.(chamber)}
         >
             {/* 紧凑型 Header */}
-            <header className="px-2.5 py-1.5 flex items-center justify-between bg-white/[0.02] border-b border-white/5">
+            <header className="px-2.5 py-1.5 flex items-center justify-between bg-muted/50 dark:bg-white/[0.02] border-b border-border dark:border-white/5">
                 <div className="flex flex-col">
-                    <span className="text-xs font-black text-slate-200 tracking-tight truncate max-w-[100px] leading-none">{chamber?.name || '未知腔体'}</span>
+                    <span className="text-xs font-black text-foreground dark:text-slate-200 tracking-tight truncate max-w-[100px] leading-none">{chamber?.name || '未知腔体'}</span>
                 </div>
                 <div className="flex items-center gap-1.5 shrink-0">
                     {chamber?.isHeating && (
