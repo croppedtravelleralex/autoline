@@ -17,7 +17,7 @@ interface ChamberCardProps {
 
 // 呼吸灯状态指示器
 // status: 'running' = 绿色 | 'warning' = 黄色 | 'error' = 红色 | 'off' = 灰色
-type LEDStatus = 'running' | 'warning' | 'error' | 'off';
+type LEDStatus = 'running' | 'heating' | 'warning' | 'error' | 'off';
 
 const BreathingLED = ({
     active,
@@ -41,15 +41,20 @@ const BreathingLED = ({
             shadow: 'shadow-[0_0_6px_#10b981]',
             animate: 'animate-pulse'
         },
+        heating: {
+            bg: 'bg-orange-500',
+            shadow: 'shadow-[0_0_6px_#f97316]',
+            animate: 'animate-pulse'
+        },
         warning: {
             bg: 'bg-amber-500',
             shadow: 'shadow-[0_0_6px_#f59e0b]',
             animate: 'animate-pulse'
         },
         error: {
-            bg: 'bg-[#000000]',
-            shadow: 'shadow-[0_0_2px_rgba(255,255,255,0.2)]',
-            animate: ''
+            bg: 'bg-red-500',
+            shadow: 'shadow-[0_0_6px_#ef4444]',
+            animate: 'animate-pulse'
         },
         off: {
             bg: 'bg-slate-600',
@@ -156,7 +161,7 @@ export const ChamberCard: React.FC<ChamberCardProps> = ({ chamber, lineId, carts
                 "shrink-0 min-w-[160px] max-w-[170px] bg-card dark:bg-[#0b0e1b]/95 backdrop-blur-md border border-border dark:border-sky-500/20 rounded-xl shadow-lg dark:shadow-2xl overflow-hidden group/card hover:border-primary/50 dark:hover:border-sky-400/50 transition-all duration-300",
                 isReadOnly ? "cursor-default opacity-95" : "cursor-pointer"
             )}
-            onClick={() => !isReadOnly && onOpenSettings?.(chamber)}
+            onClick={() => onOpenSettings?.(chamber)}
         >
             {/* 紧凑型 Header */}
             <header className="px-2.5 py-1.5 flex items-center justify-between bg-muted/50 dark:bg-white/[0.02] border-b border-border dark:border-white/5">
@@ -233,6 +238,12 @@ export const ChamberCard: React.FC<ChamberCardProps> = ({ chamber, lineId, carts
 
                 {/* 状态位布局 - 改为 flex 不换行排列 */}
                 <div className="flex items-start justify-between px-1">
+                    <BreathingLED
+                        active={!!chamber?.isHeating}
+                        status={chamber?.isHeating ? 'heating' : 'off'}
+                        label="加"
+                        onClick={() => onOpenSettings?.(chamber)}
+                    />
                     <BreathingLED
                         active={!!chamber?.molecularPump}
                         label="分"

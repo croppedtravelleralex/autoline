@@ -8,27 +8,67 @@ from app.services.state_service import StateService
 from app.services.history_service import get_history_service
 from app.models import Chamber, ValveState, DeviceStatus, SimulationConfig, SimulationFault, FaultType
 import uuid
+import os
+import json
+from threading import RLock
+
+DATA_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "mes_data")
+SIM_CONFIG_FILE = os.path.join(DATA_DIR, "simulation_config.json")
 
 class SimulationService:
-    def __init__(self):
+    _instance = None
+    _lock = RLock()
+
+    def __new__(cls):
+        if cls._instance is None:
+            with cls._lock:
+                if cls._instance is None:
+                    cls._instance = super(SimulationService, cls).__new__(cls)
+                    cls._instance._init_service()
+        return cls._instance
+
+    def _init_service(self):
         self.state_service = StateService()
         self.running = False
         self.thread: Optional[threading.Thread] = None
         self._last_update = time.time()
         
-        # Simulation Configuration
-        self._config = SimulationConfig()
+        # Load or initialize Simulation Configuration
+        self._load_config()
         
         # 小车位置追踪：{cart_id: {'chamber_id': str, 'enter_time': float}}
         self._cart_locations = {}
         # 温度突降事件追踪：{cart_id: {'temp_drop': float, 'start_time': float}}
         self._temp_drop_events = {}
 
+    def _save_config(self):
+        """保存仿真配置"""
+        try:
+            with open(SIM_CONFIG_FILE, 'w', encoding='utf-8') as f:
+                f.write(self._config.model_dump_json(indent=2))
+        except Exception as e:
+            print(f"Error saving simulation config: {e}")
+
+    def _load_config(self):
+        """加载仿真配置"""
+        self._config = SimulationConfig()
+        if os.path.exists(SIM_CONFIG_FILE):
+            try:
+                with open(SIM_CONFIG_FILE, 'r', encoding='utf-8') as f:
+                    data = json.load(f)
+                    self._config = SimulationConfig.model_validate(data)
+            except Exception as e:
+                print(f"Error loading simulation config, using defaults: {e}")
+                self._save_config()
+        else:
+            self._save_config()
+
     def get_config(self) -> SimulationConfig:
         return self._config
 
     def update_config(self, config: SimulationConfig) -> SimulationConfig:
         self._config = config
+        self._save_config()
         return self._config
 
     def inject_fault(self, fault_type: FaultType, line_id: str, chamber_id: str) -> SimulationFault:
@@ -41,10 +81,12 @@ class SimulationService:
             description=f"Manual injection of {fault_type} at {chamber_id}"
         )
         self._config.activeFaults.append(fault)
+        self._save_config()
         return fault
 
     def clear_faults(self):
         self._config.activeFaults = []
+        self._save_config()
 
 
     def start(self):
@@ -211,6 +253,11 @@ class SimulationService:
             
             # 记录腔体历史数据
             self._record_chamber_history()
+            
+            # 每 10 秒持久化一次系统状态（保存模拟出的温压数据）
+            # 这里的 tick 是 1s
+            if int(now) % 10 == 0:
+                self.state_service._save_state()
             
             time.sleep(1.0) # Tick every 1 second (independent of simulation speed)
 

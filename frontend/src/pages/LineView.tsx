@@ -82,7 +82,8 @@ export function LineView() {
 
         try {
             if (modalConfig.type === 'load') {
-                await actions.createCart(modalConfig.lineId, modalConfig.chamberId, data);
+                // 传递 polarity (lineType) 给后端
+                await actions.createCart(modalConfig.lineId, modalConfig.chamberId, modalConfig.lineType, data);
             } else {
                 // For unload, we need cartId. Find cart in that chamber
                 const cart = lineCarts.find(c => c.locationChamberId === modalConfig.chamberId);
@@ -96,6 +97,7 @@ export function LineView() {
             alert('操作失败');
         }
     };
+
 
     if (!line) {
         return (

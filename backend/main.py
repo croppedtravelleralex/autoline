@@ -42,4 +42,5 @@ if __name__ == "__main__":
     import uvicorn
     # 获取环境变量 PORT，默认为 8080 (Zeabur 标准端口)
     port = int(os.environ.get("PORT", 8080))
-    uvicorn.run(app, host="0.0.0.0", port=port)
+    # 使用字符串形式以支持 reload
+    uvicorn.run("main:app", host="0.0.0.0", port=port, reload=True)

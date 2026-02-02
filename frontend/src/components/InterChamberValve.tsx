@@ -78,15 +78,15 @@ export const InterChamberValve = ({ isOpen, state, onClick, isReadOnly }: InterC
                         height="96"
                         rx="1"
                         className="fill-current opacity-20"
-                        initial={false}
+                        initial={{ height: 96, opacity: 0.8 }}
                         animate={{
                             height: isOpen ? 0 : 96,
                             opacity: isOpen ? 0 : 0.8,
                         }}
                         transition={{
                             type: "spring",
-                            stiffness: 120,
-                            damping: 20,
+                            stiffness: 80,
+                            damping: 15,
                             mass: 0.8
                         }}
                     />
@@ -96,15 +96,15 @@ export const InterChamberValve = ({ isOpen, state, onClick, isReadOnly }: InterC
                         d="M6 0H18"
                         className="stroke-current"
                         strokeWidth="2"
-                        initial={false}
+                        initial={{ translateY: 112, opacity: 1 }}
                         animate={{
                             translateY: isOpen ? 16 : 112, // 16是顶部，112是底部
                             opacity: isOpen ? 0 : 1
                         }}
                         transition={{
                             type: "spring",
-                            stiffness: 120,
-                            damping: 20,
+                            stiffness: 80,
+                            damping: 15,
                             mass: 0.8
                         }}
                         vectorEffect="non-scaling-stroke"

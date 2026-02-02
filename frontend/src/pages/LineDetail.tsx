@@ -63,16 +63,23 @@ export function LineDetail() {
 
         const found = state.lines.find(l => l.id === id);
         if (found) {
-            // 只有当ID变化或者第一次加载时（或者非dirty状态下的数据更新）才更新
-            // 这里简单做一个对比，如果数据完全一样就不更新，避免无谓渲染?
-            // 但其实最主要的是防覆盖。只要 !isDirty，就允许覆盖（保持实时性）。
-            // 这种逻辑下，如果用户还没改，后台变了，界面会跟着变。一旦改了，就锁住。
             setLine(found);
-            setLineName(found.name);
+            // 自动修正名称：如果是默认格式 "X号线"，则根据当前序号自动重命名为 "N号线"
+            // Start of auto-correction logic
+            const isDefaultName = /^\d+号线$/.test(found.name);
+            if (isDefaultName) {
+                setLineName(`${lineIndex}号线`);
+                if (found.name !== `${lineIndex}号线`) {
+                    setIsDirty(true); // 标记为有修改，方便用户直接保存同步
+                }
+            } else {
+                setLineName(found.name);
+            }
+
             setAnodeChambers(found.anodeChambers || []);
             setCathodeChambers(found.cathodeChambers || []);
         }
-    }, [id, state.lines, isDirty]);
+    }, [id, state.lines, isDirty, lineIndex]);
 
     const handleSave = async () => {
         if (!line) return;
@@ -200,81 +207,93 @@ export function LineDetail() {
                             {...provided.droppableProps}
                             className="flex items-center gap-4 px-4 min-w-max pb-4 overflow-x-auto"
                         >
-                            {chambers.map((chamber, index) => (
-                                <Draggable key={chamber.id} draggableId={chamber.id} index={index}>
-                                    {(provided: any, snapshot: any) => (
-                                        <div
-                                            ref={provided.innerRef}
-                                            {...provided.draggableProps}
-                                            style={{
-                                                ...provided.draggableProps.style,
-                                                // Manually add rotation during drag to avoid fighting with dnd transform
-                                                transform: snapshot.isDragging
-                                                    ? `${provided.draggableProps.style?.transform} rotate(2deg)`
-                                                    : provided.draggableProps.style?.transform,
-                                            }}
-                                            className={cn(
-                                                "relative w-44 bg-slate-900/80 border border-white/10 rounded-xl p-4",
-                                                !snapshot.isDragging && "transition-all duration-300",
-                                                snapshot.isDragging && "ring-2 ring-sky-500 shadow-2xl z-50"
-                                            )}
-                                        >
-                                            {/* Drag Handle */}
-                                            <div {...provided.dragHandleProps} className="absolute top-2 left-2 cursor-grab active:cursor-grabbing">
-                                                <GripVertical className="w-4 h-4 text-slate-600 hover:text-slate-400" />
-                                            </div>
-
-                                            {/* Delete Button - 只在腔体数 > 1 时显示 */}
-                                            {chambers.length > 1 && (
-                                                <button
-                                                    onClick={(e) => {
-                                                        e.stopPropagation();
-                                                        removeChamber(chamber.id, chambers, setChambers, typeName);
-                                                    }}
-                                                    className="absolute top-2 right-2 p-1 text-slate-600 hover:text-red-400 hover:bg-red-500/10 rounded transition-colors z-20"
-                                                    title="删除腔体"
-                                                >
-                                                    <Trash2 className="w-4 h-4" />
-                                                </button>
-                                            )}
-
-                                            {/* Chamber Name */}
-                                            <div className="mt-4 mb-3">
-                                                <label className="text-[10px] uppercase text-slate-500 tracking-wider">名称</label>
-                                                <input
-                                                    type="text"
-                                                    value={chamber.name}
-                                                    onChange={(e) => updateChamberName(chamber.id, e.target.value, chambers, setChambers)}
-                                                    className="w-full mt-1 bg-slate-800 border border-white/10 rounded px-2 py-1.5 text-sm text-white focus:outline-none focus:ring-1 focus:ring-sky-500"
-                                                />
-                                            </div>
-
-                                            {/* Chamber Type */}
-                                            <div>
-                                                <label className="text-[10px] uppercase text-slate-500 tracking-wider">类型</label>
-                                                <select
-                                                    value={chamber.type}
-                                                    onChange={(e) => updateChamberType(chamber.id, e.target.value, chambers, setChambers)}
-                                                    className="w-full mt-1 bg-slate-800 border border-white/10 rounded px-2 py-1.5 text-sm text-white focus:outline-none focus:ring-1 focus:ring-sky-500 appearance-none cursor-pointer"
-                                                >
-                                                    {CHAMBER_TYPE_OPTIONS.map(opt => (
-                                                        <option key={opt.value} value={opt.value}>{opt.label}</option>
-                                                    ))}
-                                                </select>
-                                            </div>
-
-                                            {/* Add Chamber Button */}
-                                            <button
-                                                onClick={() => addChamber(index, chambers, setChambers, prefix)}
-                                                className="absolute -right-5 top-1/2 -translate-y-1/2 z-10 w-8 h-8 bg-sky-600 hover:bg-sky-500 rounded-full flex items-center justify-center shadow-lg text-white transition-all hover:scale-110"
-                                                title="在此后添加腔体"
+                            {chambers.length === 0 ? (
+                                <button
+                                    onClick={() => addChamber(-1, chambers, setChambers, prefix)}
+                                    className="w-44 h-48 border-2 border-dashed border-white/10 rounded-xl flex flex-col items-center justify-center gap-2 text-slate-500 hover:text-sky-400 hover:border-sky-500/50 hover:bg-sky-500/5 transition-all group"
+                                >
+                                    <div className="w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center group-hover:bg-sky-500/20 transition-colors">
+                                        <Plus className="w-6 h-6" />
+                                    </div>
+                                    <span className="text-sm font-bold">添加第一个腔体</span>
+                                </button>
+                            ) : (
+                                chambers.map((chamber, index) => (
+                                    <Draggable key={chamber.id} draggableId={chamber.id} index={index}>
+                                        {(provided: any, snapshot: any) => (
+                                            <div
+                                                ref={provided.innerRef}
+                                                {...provided.draggableProps}
+                                                style={{
+                                                    ...provided.draggableProps.style,
+                                                    // Manually add rotation during drag to avoid fighting with dnd transform
+                                                    transform: snapshot.isDragging
+                                                        ? `${provided.draggableProps.style?.transform} rotate(2deg)`
+                                                        : provided.draggableProps.style?.transform,
+                                                }}
+                                                className={cn(
+                                                    "relative w-44 bg-slate-900/80 border border-white/10 rounded-xl p-4",
+                                                    !snapshot.isDragging && "transition-all duration-300",
+                                                    snapshot.isDragging && "ring-2 ring-sky-500 shadow-2xl z-50"
+                                                )}
                                             >
-                                                <Plus className="w-4 h-4" />
-                                            </button>
-                                        </div>
-                                    )}
-                                </Draggable>
-                            ))}
+                                                {/* Drag Handle */}
+                                                <div {...provided.dragHandleProps} className="absolute top-2 left-2 cursor-grab active:cursor-grabbing">
+                                                    <GripVertical className="w-4 h-4 text-slate-600 hover:text-slate-400" />
+                                                </div>
+
+                                                {/* Delete Button - 只在腔体数 > 1 时显示 */}
+                                                {(chambers.length > 0) && (
+                                                    <button
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            removeChamber(chamber.id, chambers, setChambers, typeName);
+                                                        }}
+                                                        className="absolute top-2 right-2 p-1 text-slate-600 hover:text-red-400 hover:bg-red-500/10 rounded transition-colors z-20"
+                                                        title="删除腔体"
+                                                    >
+                                                        <Trash2 className="w-4 h-4" />
+                                                    </button>
+                                                )}
+
+                                                {/* Chamber Name */}
+                                                <div className="mt-4 mb-3">
+                                                    <label className="text-[10px] uppercase text-slate-500 tracking-wider">名称</label>
+                                                    <input
+                                                        type="text"
+                                                        value={chamber.name}
+                                                        onChange={(e) => updateChamberName(chamber.id, e.target.value, chambers, setChambers)}
+                                                        className="w-full mt-1 bg-slate-800 border border-white/10 rounded px-2 py-1.5 text-sm text-white focus:outline-none focus:ring-1 focus:ring-sky-500"
+                                                    />
+                                                </div>
+
+                                                {/* Chamber Type */}
+                                                <div>
+                                                    <label className="text-[10px] uppercase text-slate-500 tracking-wider">类型</label>
+                                                    <select
+                                                        value={chamber.type}
+                                                        onChange={(e) => updateChamberType(chamber.id, e.target.value, chambers, setChambers)}
+                                                        className="w-full mt-1 bg-slate-800 border border-white/10 rounded px-2 py-1.5 text-sm text-white focus:outline-none focus:ring-1 focus:ring-sky-500 appearance-none cursor-pointer"
+                                                    >
+                                                        {CHAMBER_TYPE_OPTIONS.map(opt => (
+                                                            <option key={opt.value} value={opt.value}>{opt.label}</option>
+                                                        ))}
+                                                    </select>
+                                                </div>
+
+                                                {/* Add Chamber Button */}
+                                                <button
+                                                    onClick={() => addChamber(index, chambers, setChambers, prefix)}
+                                                    className="absolute -right-5 top-1/2 -translate-y-1/2 z-10 w-8 h-8 bg-sky-600 hover:bg-sky-500 rounded-full flex items-center justify-center shadow-lg text-white transition-all hover:scale-110"
+                                                    title="在此后添加腔体"
+                                                >
+                                                    <Plus className="w-4 h-4" />
+                                                </button>
+                                            </div>
+                                        )}
+                                    </Draggable>
+                                ))
+                            )}
                             {provided.placeholder}
                         </div>
                     )}
@@ -293,7 +312,7 @@ export function LineDetail() {
                     </button>
                     <div className="flex flex-col">
                         <div className="flex items-center gap-2">
-                            <span className="text-3xl font-black text-sky-500">{line.id}</span>
+                            <span className="text-3xl font-black text-sky-500">{lineIndex}#</span>
                             <input
                                 value={lineName}
                                 onChange={(e) => {
@@ -304,7 +323,7 @@ export function LineDetail() {
                                 className="bg-transparent text-2xl font-bold text-white placeholder-slate-600 focus:outline-none focus:ring-0 border-none w-64"
                             />
                         </div>
-                        <span className="text-xs font-mono text-slate-600">System ID: {line.id}</span>
+                        {/* System ID Hidden as per request */}
                     </div>
                 </div>
                 <div className="flex items-center gap-3">

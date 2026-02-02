@@ -1,6 +1,6 @@
 import json
 import os
-from threading import Lock
+from threading import RLock
 from typing import Optional
 
 from app.models import SystemSettings, NotificationSettings, AlarmThresholds
@@ -10,7 +10,7 @@ SETTINGS_FILE = os.path.join(DATA_DIR, "settings.json")
 
 class SettingsService:
     _instance = None
-    _lock = Lock()
+    _lock = RLock()
     
     def __new__(cls):
         if not cls._instance:

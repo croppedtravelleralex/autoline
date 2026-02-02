@@ -27,6 +27,7 @@ class HistoryService:
         os.makedirs(os.path.dirname(self.DB_PATH), exist_ok=True)
         
         # 初始化数据库
+        print(f"[INFO] HistoryService: Initializing database at {self.DB_PATH}")
         self._init_db()
         
         # 线程锁仅用于保护不可重入的操作（SQLite本身对多线程支持尚可，但建议每个线程使用独立连接或串行访问）
@@ -78,6 +79,7 @@ class HistoryService:
                 CREATE INDEX IF NOT EXISTS idx_timestamp 
                 ON history_data (timestamp)
             """)
+            print(f"[DEBUG] HistoryService: Database schema initialized successfully")
             conn.execute("CREATE INDEX IF NOT EXISTS idx_snap_timestamp ON snapshots (timestamp)")
             
             # 创建事件表 (Event Markers)
@@ -138,6 +140,20 @@ class HistoryService:
                 print(f"Error taking snapshot: {e}")
             
             time.sleep(10)
+
+    def trigger_backup(self, state):
+        """立即触发一次系统状态快照备份"""
+        try:
+            import json
+            # 处理 Pydantic 兼容性
+            if hasattr(state, "model_dump_json"):
+                snapshot_json = state.model_dump_json()
+            else:
+                snapshot_json = json.dumps(state, default=lambda x: str(x))
+            
+            self.record_snapshot(snapshot_json, state.timestamp / 1000.0)
+        except Exception as e:
+            print(f"Error triggering backup snapshot: {e}")
 
     def record_snapshot(self, snapshot_data: str, timestamp: float):
         """记录系统快照"""
@@ -306,9 +322,12 @@ class HistoryService:
                     (entity_id, metric, start_time, end_time)
                 )
                 rows = cursor.fetchall()
+                print(f"[DEBUG] HistoryService: Query {entity_id} {metric} returned {len(rows)} rows")
                 return [dict(row) for row in rows]
         except Exception as e:
-            print(f"Error querying data: {e}")
+            print(f"[ERROR] HistoryService: Error querying data for {entity_id}: {e}")
+            import traceback
+            traceback.print_exc()
             return []
 
     def get_latest_data(

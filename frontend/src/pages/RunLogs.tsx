@@ -1,10 +1,10 @@
 import { useState, useMemo } from 'react';
 import { useSystemStateContext } from '../context/SystemStateContext';
-import { ListTodo, AlertTriangle, Activity, Download, Filter } from 'lucide-react';
-import type { LogEntry } from '../types';
+import { ListTodo, AlertTriangle, Activity, Download, Filter, LogIn } from 'lucide-react';
+import type { LogEntry, LoginLog } from '../types';
 import { cn } from '../lib/utils';
 
-type LogTab = 'system' | 'warning' | 'operation';
+type LogTab = 'system' | 'warning' | 'operation' | 'login';
 
 // CSV 导出工具函数
 const exportToCSV = (logs: LogEntry[], filename: string) => {
@@ -19,6 +19,29 @@ const exportToCSV = (logs: LogEntry[], filename: string) => {
         log.type === 'system' ? '系统日志' : '操作日志',
         log.level === 'info' ? '信息' : log.level === 'warn' ? '警告' : log.level === 'error' ? '错误' : '成功',
         `"${log.content.replace(/"/g, '""')}"` // 处理内容中的引号
+    ]);
+
+    const csvContent = '\uFEFF' + [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = `${filename}_${new Date().toISOString().slice(0, 10)}.csv`;
+    link.click();
+};
+
+// 登录日志 CSV 导出
+const exportLoginLogsToCSV = (logs: LoginLog[], filename: string) => {
+    if (!logs || logs.length === 0) {
+        alert('没有可导出的日志数据');
+        return;
+    }
+
+    const headers = ['时间戳', '用户名', '动作', 'IP地址'];
+    const rows = logs.map(log => [
+        new Date(log.timestamp).toLocaleString('zh-CN'),
+        log.username,
+        log.action === 'login' ? '登录' : '登出',
+        log.ip || '-'
     ]);
 
     const csvContent = '\uFEFF' + [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
@@ -54,6 +77,29 @@ const LogItem = ({ log }: { log: LogEntry }) => (
     </div>
 );
 
+// 登录日志项组件
+const LoginLogItem = ({ log }: { log: LoginLog }) => (
+    <div className="flex gap-3 items-center py-2.5 px-3 rounded-lg hover:bg-white/5 transition-colors border-b border-white/5 last:border-b-0">
+        <span className="text-slate-600 shrink-0 font-mono text-xs">
+            [{new Date(log.timestamp).toLocaleString('zh-CN')}]
+        </span>
+        <div className="flex items-center gap-2 flex-1">
+            <span className={cn(
+                "text-xs px-2 py-0.5 rounded-full font-medium",
+                log.action === 'login' ? 'bg-emerald-500/20 text-emerald-400' : 'bg-orange-500/20 text-orange-400'
+            )}>
+                {log.action === 'login' ? '登录' : '登出'}
+            </span>
+            <span className="text-sm text-slate-300 font-medium">{log.username}</span>
+            {log.ip && (
+                <span className="text-xs text-slate-500 font-mono bg-slate-800/50 px-2 py-0.5 rounded">
+                    IP: {log.ip}
+                </span>
+            )}
+        </div>
+    </div>
+);
+
 // 标签按钮组件
 const TabButton = ({
     active,
@@ -73,14 +119,14 @@ const TabButton = ({
     <button
         onClick={onClick}
         className={cn(
-            "flex items-center gap-2 px-4 py-2.5 rounded-lg transition-all duration-300 font-medium text-sm",
+            "flex items-center gap-1 sm:gap-2 px-2 sm:px-4 py-2 sm:py-2.5 rounded-lg transition-all duration-300 font-medium text-xs sm:text-sm whitespace-nowrap",
             active
                 ? `bg-gradient-to-r ${colorClass} text-white shadow-lg`
                 : "bg-slate-800/50 text-slate-400 hover:bg-slate-700/50 hover:text-slate-200"
         )}
     >
-        <Icon className="w-4 h-4" />
-        <span>{label}</span>
+        <Icon className="w-4 h-4 shrink-0" />
+        <span className="hidden sm:inline">{label}</span>
         <span className={cn(
             "px-1.5 py-0.5 rounded-full text-[10px] font-mono",
             active ? "bg-white/20" : "bg-slate-700"
@@ -100,15 +146,16 @@ export function RunLogs() {
             case 'system':
                 return state.systemLogs || [];
             case 'warning':
-                // 合并系统日志和操作日志中的警告和错误
                 const allLogs = [...(state.systemLogs || []), ...(state.operationLogs || [])];
                 return allLogs.filter(log => log.level === 'warn' || log.level === 'error');
             case 'operation':
                 return state.operationLogs || [];
+            case 'login':
+                return state.loginLogs || [];
             default:
                 return [];
         }
-    }, [activeTab, state.systemLogs, state.operationLogs]);
+    }, [activeTab, state.systemLogs, state.operationLogs, state.loginLogs]);
 
     // 计算各类日志数量
     const counts = useMemo(() => {
@@ -117,8 +164,9 @@ export function RunLogs() {
             system: state.systemLogs?.length || 0,
             warning: allLogs.filter(log => log.level === 'warn' || log.level === 'error').length,
             operation: state.operationLogs?.length || 0,
+            login: state.loginLogs?.length || 0,
         };
-    }, [state.systemLogs, state.operationLogs]);
+    }, [state.systemLogs, state.operationLogs, state.loginLogs]);
 
     // 获取当前标签的导出文件名
     const getExportFilename = () => {
@@ -126,26 +174,27 @@ export function RunLogs() {
             case 'system': return '系统日志';
             case 'warning': return '警告日志';
             case 'operation': return '操作日志';
+            case 'login': return '登录日志';
             default: return '日志';
         }
     };
 
     return (
-        <div className="h-full flex flex-col p-6 gap-4">
+        <div className="h-full flex flex-col p-3 md:p-6 gap-3 md:gap-4">
             {/* 标题栏 */}
             <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                    <ListTodo className="w-6 h-6 text-sky-400" />
-                    <h1 className="text-xl font-bold text-white">运行日志中心</h1>
+                    <ListTodo className="w-5 h-5 md:w-6 md:h-6 text-sky-400" />
+                    <h1 className="text-lg md:text-xl font-bold text-white">运行日志中心</h1>
                 </div>
                 <div className="text-sm text-slate-500">
-                    共 {(state.systemLogs?.length || 0) + (state.operationLogs?.length || 0)} 条日志
+                    共 {(state.systemLogs?.length || 0) + (state.operationLogs?.length || 0) + (state.loginLogs?.length || 0)} 条日志
                 </div>
             </div>
 
-            {/* 标签页切换 + 导出按钮 */}
-            <div className="flex items-center justify-between gap-4">
-                <div className="flex items-center gap-2">
+            {/* 标签页切换 + 导出按钮 - 移动端横向滚动 */}
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 sm:gap-4">
+                <div className="flex items-center gap-1 sm:gap-2 overflow-x-auto max-w-full scrollbar-none">
                     <TabButton
                         active={activeTab === 'system'}
                         onClick={() => setActiveTab('system')}
@@ -170,12 +219,26 @@ export function RunLogs() {
                         count={counts.operation}
                         colorClass="from-purple-600 to-purple-700"
                     />
+                    <TabButton
+                        active={activeTab === 'login'}
+                        onClick={() => setActiveTab('login')}
+                        icon={LogIn}
+                        label="登录日志"
+                        count={counts.login}
+                        colorClass="from-indigo-600 to-indigo-700"
+                    />
                 </div>
 
                 {/* 导出按钮组 */}
                 <div className="flex items-center gap-2">
                     <button
-                        onClick={() => exportToCSV(filteredLogs, getExportFilename())}
+                        onClick={() => {
+                            if (activeTab === 'login') {
+                                exportLoginLogsToCSV(state.loginLogs || [], getExportFilename());
+                            } else {
+                                exportToCSV(filteredLogs as LogEntry[], getExportFilename());
+                            }
+                        }}
                         className="flex items-center gap-2 px-4 py-2 bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-400 rounded-lg transition-colors text-sm font-medium border border-emerald-500/30"
                     >
                         <Download className="w-4 h-4" />
@@ -207,10 +270,17 @@ export function RunLogs() {
                             </button>
                             <button
                                 onClick={() => exportToCSV(state.operationLogs || [], '操作日志')}
-                                className="w-full px-3 py-2 text-left text-sm text-slate-300 hover:bg-white/5 rounded-b-lg flex items-center gap-2"
+                                className="w-full px-3 py-2 text-left text-sm text-slate-300 hover:bg-white/5 flex items-center gap-2"
                             >
                                 <Activity className="w-3.5 h-3.5 text-purple-400" />
                                 操作日志
+                            </button>
+                            <button
+                                onClick={() => exportLoginLogsToCSV(state.loginLogs || [], '登录日志')}
+                                className="w-full px-3 py-2 text-left text-sm text-slate-300 hover:bg-white/5 rounded-b-lg flex items-center gap-2"
+                            >
+                                <LogIn className="w-3.5 h-3.5 text-indigo-400" />
+                                登录日志
                             </button>
                         </div>
                     </div>
@@ -220,13 +290,26 @@ export function RunLogs() {
             {/* 日志列表区域 */}
             <div className="flex-1 bg-slate-950/60 border border-white/5 rounded-xl overflow-hidden backdrop-blur-sm shadow-inner">
                 <div className="h-full overflow-y-auto p-3 scrollbar-thin scrollbar-thumb-slate-700">
-                    {filteredLogs.length > 0 ? (
-                        filteredLogs.map(log => <LogItem key={log.id} log={log} />)
+                    {activeTab === 'login' ? (
+                        // 渲染登录日志
+                        (state.loginLogs && state.loginLogs.length > 0) ? (
+                            state.loginLogs.map(log => <LoginLogItem key={log.id} log={log} />)
+                        ) : (
+                            <div className="flex flex-col items-center justify-center h-full text-slate-600">
+                                <Filter className="w-12 h-12 mb-3 opacity-50" />
+                                <p className="text-sm">暂无登录日志数据</p>
+                            </div>
+                        )
                     ) : (
-                        <div className="flex flex-col items-center justify-center h-full text-slate-600">
-                            <Filter className="w-12 h-12 mb-3 opacity-50" />
-                            <p className="text-sm">暂无{getExportFilename()}数据</p>
-                        </div>
+                        // 渲染其他日志
+                        (filteredLogs as LogEntry[]).length > 0 ? (
+                            (filteredLogs as LogEntry[]).map(log => <LogItem key={log.id} log={log} />)
+                        ) : (
+                            <div className="flex flex-col items-center justify-center h-full text-slate-600">
+                                <Filter className="w-12 h-12 mb-3 opacity-50" />
+                                <p className="text-sm">暂无{getExportFilename()}数据</p>
+                            </div>
+                        )
                     )}
                 </div>
             </div>

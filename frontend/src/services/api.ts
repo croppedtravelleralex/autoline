@@ -135,12 +135,12 @@ export const duplicateLine = async (id: string) => {
     return res.json();
 };
 
-export const createCart = async (lineId: string, chamberId: string, data: any) => {
+export const createCart = async (lineId: string, chamberId: string, polarity: string, data: any) => {
     const user = JSON.parse(localStorage.getItem('user') || '{"username":"Admin","role":"admin"}');
     const res = await fetch(`${API_BASE}/cart?operator_name=${user.username}&operator_role=${user.role}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ lineId, chamberId, data })
+        body: JSON.stringify({ lineId, chamberId, polarity, data })
     });
 
     if (res.status === 404) {
@@ -195,6 +195,46 @@ export const updateChamber = async (lineId: string, chamberId: string, updates: 
     if (!res.ok) {
         const err = await res.json();
         throw new Error(err.detail || 'Update chamber failed');
+    }
+    return res.json();
+};
+
+export const fetchTemplates = async () => {
+    const res = await fetch(`${API_BASE}/templates`);
+    if (!res.ok) throw new Error("Failed to fetch templates");
+    return res.json();
+};
+
+export const saveAsTemplate = async (lineId: string, name: string, description: string = "") => {
+    const res = await fetch(`${API_BASE}/lines/${encodeURIComponent(lineId)}/save-as-template?name=${encodeURIComponent(name)}&description=${encodeURIComponent(description)}`, {
+        method: 'POST'
+    });
+    if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.detail || 'Save as template failed');
+    }
+    return res.json();
+};
+
+export const deleteTemplate = async (templateId: string) => {
+    const res = await fetch(`${API_BASE}/templates/${encodeURIComponent(templateId)}`, {
+        method: 'DELETE'
+    });
+    if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.detail || 'Delete template failed');
+    }
+    return res.json();
+};
+
+export const createFromTemplate = async (templateId: string, name?: string) => {
+    const url = `${API_BASE}/lines/create-from-template/${encodeURIComponent(templateId)}${name ? `?name=${encodeURIComponent(name)}` : ''}`;
+    const res = await fetch(url, {
+        method: 'POST'
+    });
+    if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.detail || 'Create from template failed');
     }
     return res.json();
 };

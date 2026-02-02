@@ -1,7 +1,13 @@
+import os
+import json
 import time
 import uuid
+from threading import RLock
 from typing import List, Optional
 from app.models import User, UserRole
+
+DATA_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "mes_data")
+USERS_FILE = os.path.join(DATA_DIR, "users.json")
 
 # 模拟数据库
 MOCK_USERS_DB = [
@@ -12,15 +18,48 @@ MOCK_USERS_DB = [
 
 class UserService:
     _instance = None
+    _lock = RLock()
     
     def __new__(cls):
         if cls._instance is None:
-            cls._instance = super(UserService, cls).__new__(cls)
-            cls._instance.users = MOCK_USERS_DB
-            # 确保默认admin存在
-            if not any(u.username == "admin" for u in cls._instance.users):
-                 cls._instance.users.append(User(username="admin", role=UserRole.admin, token="admin-token"))
+            with cls._lock:
+                if cls._instance is None:
+                    cls._instance = super(UserService, cls).__new__(cls)
+                    cls._instance._load_users()
         return cls._instance
+
+    def _load_users(self):
+        self.users: List[User] = []
+        if not os.path.exists(DATA_DIR):
+            os.makedirs(DATA_DIR, exist_ok=True)
+            
+        if os.path.exists(USERS_FILE):
+            try:
+                with open(USERS_FILE, 'r', encoding='utf-8') as f:
+                    data = json.load(f)
+                    self.users = [User.model_validate(item) for item in data]
+            except Exception as e:
+                print(f"Error loading users, using defaults: {e}")
+                self._init_defaults()
+        else:
+            self._init_defaults()
+
+    def _init_defaults(self):
+        # 初始默认用户
+        self.users = [
+            User(username="admin", role=UserRole.admin, token="admin-token"),
+            User(username="operator", role=UserRole.operator, token="op-token"),
+            User(username="observer", role=UserRole.observer, token="obs-token"),
+        ]
+        self._save_users()
+
+    def _save_users(self):
+        try:
+            with open(USERS_FILE, 'w', encoding='utf-8') as f:
+                data = [u.model_dump() for u in self.users]
+                json.dump(data, f, indent=2, ensure_ascii=False)
+        except Exception as e:
+            print(f"Error saving users: {e}")
 
     def get_all_users(self) -> List[User]:
         return self.users
@@ -36,7 +75,9 @@ class UserService:
         if not user.token:
             user.token = str(uuid.uuid4())
             
+            
         self.users.append(user)
+        self._save_users()
         return user
 
     def update_user(self, username: str, user_update: User) -> Optional[User]:
@@ -48,6 +89,7 @@ class UserService:
         user.role = user_update.role
         # user.token = user_update.token #通常不更新token除非重置
         
+        self._save_users()
         return user
 
     def delete_user(self, username: str) -> bool:
@@ -57,7 +99,9 @@ class UserService:
         if user.username == "admin":
              raise ValueError("Cannot delete default admin")
              
+             
         self.users.remove(user)
+        self._save_users()
         return True
 
     def authenticate(self, username: str, password: str) -> Optional[User]:
@@ -73,6 +117,7 @@ class UserService:
         if password == user.username or password == "123456":
             # 生成新 session token
             user.token = str(uuid.uuid4())
+            self._save_users()
             return user
         return None
 

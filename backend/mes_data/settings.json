@@ -12,7 +12,7 @@
     "cathodeBakeLowTemp": 20.0,
     "growthHighTemp": 250.0,
     "growthLowTemp": 20.0,
-    "vacuumAlertThreshold": 0.001,
+    "vacuumAlertThreshold": 0.0001,
     "processVacuumThreshold": 0.0005
   },
   "hardware": {

@@ -49,23 +49,23 @@ export function Statistics() {
     return (
         <div className="h-full flex flex-col">
             {/* 页面标题栏 */}
-            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-800">
-                <h1 className="text-xl font-bold text-white flex items-center gap-2">
+            <div className="flex items-center justify-between px-3 md:px-6 py-3 md:py-4 border-b border-gray-800">
+                <h1 className="text-lg md:text-xl font-bold text-white flex items-center gap-2">
                     <BarChart3 className="w-6 h-6 text-cyan-400" />
                     数据统计
                 </h1>
             </div>
 
-            {/* 标签页导航 */}
-            <div className="px-6 py-3 border-b border-gray-800 bg-gray-900/50">
-                <div className="flex items-center gap-1">
+            {/* 标签页导航 - 移动端横向滚动 */}
+            <div className="px-3 md:px-6 py-2 md:py-3 border-b border-gray-800 bg-gray-900/50 overflow-x-auto scrollbar-none">
+                <div className="flex items-center gap-1 min-w-max">
                     {TABS.map(tab => (
                         <button
                             key={tab.id}
                             onClick={() => setActiveTab(tab.id)}
                             className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all cursor-pointer ${activeTab === tab.id
-                                    ? 'bg-cyan-500/20 text-cyan-400 border border-cyan-500/30'
-                                    : 'text-gray-400 hover:text-white hover:bg-gray-800'
+                                ? 'bg-cyan-500/20 text-cyan-400 border border-cyan-500/30'
+                                : 'text-gray-400 hover:text-white hover:bg-gray-800'
                                 }`}
                         >
                             {tab.icon}
@@ -76,7 +76,7 @@ export function Statistics() {
             </div>
 
             {/* 内容区域 */}
-            <div className="flex-1 p-6 overflow-hidden">
+            <div className="flex-1 p-3 md:p-6 overflow-hidden">
                 <div className="h-full">
                     {renderTabContent()}
                 </div>

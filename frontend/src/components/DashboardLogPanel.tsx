@@ -1,8 +1,18 @@
 import type { LogEntry } from '../types';
 import { cn } from '../lib/utils';
 import { useRef, useEffect } from 'react';
+import { CollapsiblePanel } from './CollapsiblePanel';
+import { Terminal, AlertTriangle } from 'lucide-react';
 
-export const DashboardLogPanel = ({ title, logs, colorClass }: { title: string, logs: LogEntry[] | undefined, colorClass: string }) => {
+interface DashboardLogPanelProps {
+    id: string;
+    title: string;
+    logs: LogEntry[] | undefined;
+    colorClass: string;
+    icon?: 'terminal' | 'warning';
+}
+
+export const DashboardLogPanel = ({ id, title, logs, colorClass, icon = 'terminal' }: DashboardLogPanelProps) => {
     const scrollRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
@@ -11,12 +21,18 @@ export const DashboardLogPanel = ({ title, logs, colorClass }: { title: string, 
         }
     }, [logs]);
 
+    const IconComponent = icon === 'warning' ? AlertTriangle : Terminal;
+
     return (
-        <div className="flex flex-col h-full overflow-hidden">
-            <div className="px-3 py-1.5 border-b border-border dark:border-white/5 bg-muted/30 dark:bg-white/[0.02] flex items-center justify-between shrink-0">
-                <h3 className={cn("text-[10px] font-black uppercase tracking-widest", colorClass)}>{title}</h3>
-                <span className="text-[9px] text-muted-foreground dark:text-slate-600 font-mono bg-muted/80 dark:bg-white/5 px-1.5 rounded border border-border/50 dark:border-transparent">{logs?.length || 0}</span>
-            </div>
+        <CollapsiblePanel
+            id={id}
+            title={title}
+            icon={<IconComponent className="w-3 h-3" />}
+            colorClass={colorClass}
+            count={logs?.length || 0}
+            defaultExpanded={true}
+            className="h-full"
+        >
             <div ref={scrollRef} className="flex-1 overflow-y-auto p-1 space-y-0.5 font-mono text-[10px] scrollbar-thin scrollbar-thumb-muted-foreground/20 dark:scrollbar-thumb-white/5 hover:scrollbar-thumb-muted-foreground/30 dark:hover:scrollbar-thumb-white/10">
                 {(Array.isArray(logs) ? logs : []).map((log) => (
                     <div key={log.id} className="flex gap-2 hover:bg-muted dark:hover:bg-white/[0.03] px-2 py-0.5 rounded-sm transition-colors group">
@@ -30,6 +46,6 @@ export const DashboardLogPanel = ({ title, logs, colorClass }: { title: string, 
                 ))}
                 {(!logs || logs.length === 0) && <div className="text-muted-foreground dark:text-slate-800 italic px-2 py-2 text-center text-[9px]">NO DATA</div>}
             </div>
-        </div>
+        </CollapsiblePanel>
     );
 };

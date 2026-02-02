@@ -2,7 +2,7 @@
  * 历史数据API调用模块
  */
 
-const API_BASE_URL = '/api';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api';
 
 export interface HistoryDataPoint {
     timestamp: number;
@@ -29,7 +29,7 @@ export async function fetchCartHistory(
     endTime: number
 ): Promise<HistoryDataPoint[]> {
     try {
-        const url = `${API_BASE_URL}/history/${cartId}?metric=${metric}&start_time=${startTime}&end_time=${endTime}`;
+        const url = `${API_BASE_URL}/history/${encodeURIComponent(cartId)}?metric=${metric}&start_time=${startTime}&end_time=${endTime}`;
 
         const response = await fetch(url);
 
@@ -57,7 +57,7 @@ export async function fetchCartLatestHistory(
     count: number = 100
 ): Promise<HistoryDataPoint[]> {
     try {
-        const url = `${API_BASE_URL}/history/${cartId}/latest?metric=${metric}&count=${count}`;
+        const url = `${API_BASE_URL}/history/${encodeURIComponent(cartId)}/latest?metric=${metric}&count=${count}`;
 
         const response = await fetch(url);
 

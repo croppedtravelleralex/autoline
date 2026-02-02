@@ -1,7 +1,7 @@
 import json
 import os
 import uuid
-from threading import Lock
+from threading import RLock
 from typing import List, Optional
 
 from app.models import Recipe
@@ -11,7 +11,7 @@ RECIPES_FILE = os.path.join(DATA_DIR, "recipes.json")
 
 class RecipeService:
     _instance = None
-    _lock = Lock()
+    _lock = RLock()
     
     def __new__(cls):
         if not cls._instance:

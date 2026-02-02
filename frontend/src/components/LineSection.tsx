@@ -173,13 +173,9 @@ export const LineSection = ({
         <div className="space-y-4">
             {/* 线体级别的标题栏和回溯按钮 */}
             <div className="flex items-center gap-3 px-4 py-3 border-b border-glow-subtle bg-surface-1 rounded-t-xl panel-shine">
-                <div className="flex items-center gap-3">
+                <div className="flex items-center">
                     <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-sky-500/20 to-sky-600/10 flex items-center justify-center border border-sky-500/30 shadow-[0_0_15px_rgba(14,165,233,0.2)]">
                         <span className="text-sky-400 font-black text-base">{lineIndex}#</span>
-                    </div>
-                    <div>
-                        <h2 className="text-base font-bold text-white/90">{line.name}</h2>
-                        <p className="text-[10px] text-slate-500 font-medium">阳极 + 阴极 双线体</p>
                     </div>
                 </div>
 

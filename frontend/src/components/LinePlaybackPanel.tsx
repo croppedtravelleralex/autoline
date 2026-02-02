@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Play, Pause, Calendar, X, SkipBack, SkipForward } from 'lucide-react';
+import { Play, Pause, Calendar, X, SkipBack, SkipForward, History } from 'lucide-react';
 import { fetchSnapshotRange, fetchEvents } from '../services/api';
 import { useSystemStateContext } from '../context/SystemStateContext';
 import { cn } from '../lib/utils';
@@ -143,13 +143,14 @@ export const LinePlaybackPanel = ({ lineId, lineName, onClose }: LinePlaybackPan
             actions.setPlaybackTime(lineId, currentTime);
             lastSyncTimeRef.current = Date.now();
 
-            // 查找并显示最近的操作
+            // 查找并显示最近 2 秒内的操作记录
             const recentOp = [...events]
                 .sort((a, b) => b.timestamp - a.timestamp)
-                .find(e => e.timestamp <= currentTime && e.timestamp > currentTime - 5);
+                .find(e => e.timestamp <= currentTime && e.timestamp > currentTime - 2);
 
             if (recentOp) {
-                setCurrentOp(`${recentOp.operator_name}: ${recentOp.description}`);
+                // 关键点：后端返回的是 content 字段
+                setCurrentOp(recentOp.content);
             } else {
                 setCurrentOp(null);
             }
@@ -244,8 +245,26 @@ export const LinePlaybackPanel = ({ lineId, lineName, onClose }: LinePlaybackPan
             className="overflow-hidden"
         >
             <div className="bg-slate-900/90 backdrop-blur-xl border border-amber-500/30 rounded-xl mt-3 shadow-2xl shadow-amber-900/20">
-                {/* 顶部栏 (OMITTED for brevity, but I'll update the Play button area) */}
-                {/* ... */}
+                <div className="px-6 py-3 border-b border-white/5 flex items-center justify-between bg-amber-500/10">
+                    <div className="flex items-center gap-3">
+                        <div className="p-2 bg-amber-500/20 rounded-lg">
+                            <History className="w-5 h-5 text-amber-500 animate-pulse" />
+                        </div>
+                        <div>
+                            <h3 className="text-amber-500 font-bold tracking-wider">{lineName} - 历史模式 (PLAYBACK)</h3>
+                            <p className="text-[10px] text-amber-500/60 font-mono tracking-tighter">
+                                数据跨度: {range ? `${formatTime(range.start)} - ${formatTime(range.end)}` : '计算中...'}
+                            </p>
+                        </div>
+                    </div>
+                    <button
+                        onClick={handleExit}
+                        className="p-2 hover:bg-amber-500/10 rounded-full transition-colors text-amber-500/70 hover:text-amber-500"
+                    >
+                        <X className="w-5 h-5" />
+                    </button>
+                </div>
+
                 <div className="px-4 py-3">
                     <div className="flex items-center gap-4">
                         {/* 播放/暂停按钮 */}

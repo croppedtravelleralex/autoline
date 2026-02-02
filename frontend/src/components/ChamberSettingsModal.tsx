@@ -28,7 +28,8 @@ interface ChamberSettingsModalProps {
 type TabType = 'CONTROL' | 'CART' | 'MAINTENANCE';
 
 export const ChamberSettingsModal = ({ chamber, onClose }: ChamberSettingsModalProps) => {
-    const { state, actions } = useSystemStateContext();
+    const { state, actions, playback } = useSystemStateContext();
+    const isPlaybackMode = playback?.isActive || false;
     const [activeTab, setActiveTab] = useState<TabType>('CONTROL');
     const [timeRange, setTimeRange] = useState<'1m' | '1h' | '24h'>('1m');
 
@@ -464,10 +465,61 @@ export const ChamberSettingsModal = ({ chamber, onClose }: ChamberSettingsModalP
                                                             )}
                                                         </div>
                                                     </div>
-                                                    <button onClick={() => actions.togglePump(liveChamber.lineId as any, liveChamber.id, 'molecular')} className={cn("w-7 h-7 rounded-lg flex items-center justify-center transition-all", liveChamber.molecularPump ? "bg-sky-600 text-white shadow-lg shadow-sky-600/30" : "bg-white/5 text-slate-600 hover:text-slate-400")}>
+                                                    <button
+                                                        onClick={() => actions.togglePump(liveChamber.lineId as any, liveChamber.id, 'molecular')}
+                                                        disabled={isPlaybackMode}
+                                                        className={cn(
+                                                            "w-7 h-7 rounded-lg flex items-center justify-center transition-all border",
+                                                            liveChamber.molecularPump
+                                                                ? "bg-sky-600 border-sky-500 text-white shadow-lg shadow-sky-600/30"
+                                                                : "bg-slate-800/40 border-slate-700 text-slate-500 hover:text-sky-400 hover:border-sky-500/50 hover:bg-sky-500/10",
+                                                            isPlaybackMode && "opacity-50 cursor-not-allowed"
+                                                        )}
+                                                    >
                                                         <Power size={12} />
                                                     </button>
                                                 </div>
+
+                                                <div className={cn(
+                                                    "bg-muted/30 dark:bg-slate-900/40 border rounded-xl p-2 flex items-center justify-between transition-all duration-300",
+                                                    liveChamber.roughingPump
+                                                        ? "border-cyan-500/30 dark:border-cyan-500/30 shadow-sm dark:shadow-[0_0_20px_rgba(6,182,212,0.15)]"
+                                                        : "border-border dark:border-white/5"
+                                                )}>
+                                                    <div className="flex items-center gap-2">
+                                                        <div className={cn(
+                                                            "w-8 h-8 rounded-lg flex items-center justify-center border relative overflow-hidden",
+                                                            liveChamber.roughingPump ? "bg-cyan-500/10 border-cyan-500/30" : "bg-muted dark:bg-white/5 border-border dark:border-white/5"
+                                                        )}>
+                                                            {/* 旋片泵波动效果 */}
+                                                            {liveChamber.roughingPump && (
+                                                                <div className="absolute inset-0 bg-cyan-400/10 animate-pulse" />
+                                                            )}
+                                                            <Activity className={cn(
+                                                                "w-4 h-4 relative z-10",
+                                                                liveChamber.roughingPump ? "text-cyan-400 animate-spin" : "text-slate-600"
+                                                            )} style={{ animationDuration: liveChamber.roughingPump ? '4s' : '0s' }} />
+                                                        </div>
+                                                        <div className="flex flex-col">
+                                                            <p className="text-xs font-bold text-foreground dark:text-slate-200 leading-tight">旋片机械泵</p>
+                                                            <p className="text-[10px] text-muted-foreground dark:text-slate-500 font-medium">状态: {liveChamber.roughingPump ? '运行中' : '已停机'}</p>
+                                                        </div>
+                                                    </div>
+                                                    <button
+                                                        onClick={() => actions.togglePump(liveChamber.lineId as any, liveChamber.id, 'roughing')}
+                                                        disabled={isPlaybackMode}
+                                                        className={cn(
+                                                            "w-7 h-7 rounded-lg flex items-center justify-center transition-all border",
+                                                            liveChamber.roughingPump
+                                                                ? "bg-cyan-600 border-cyan-500 text-white shadow-lg shadow-cyan-600/30"
+                                                                : "bg-slate-800/40 border-slate-700 text-slate-500 hover:text-cyan-400 hover:border-cyan-500/50 hover:bg-cyan-500/10",
+                                                            isPlaybackMode && "opacity-50 cursor-not-allowed"
+                                                        )}
+                                                    >
+                                                        <Power size={12} />
+                                                    </button>
+                                                </div>
+
                                                 <div className={cn(
                                                     "bg-muted/30 dark:bg-slate-900/40 border rounded-xl p-2.5 flex flex-col gap-2 transition-all duration-300",
                                                     liveChamber.isHeating
@@ -491,6 +543,7 @@ export const ChamberSettingsModal = ({ chamber, onClose }: ChamberSettingsModalP
                                                             </div>
                                                         </div>
                                                         <button
+                                                            disabled={isPlaybackMode}
                                                             onClick={() => {
                                                                 const newHeating = !liveChamber.isHeating;
                                                                 actions.updateChamber(liveChamber.lineId as any, liveChamber.id, {
@@ -499,8 +552,11 @@ export const ChamberSettingsModal = ({ chamber, onClose }: ChamberSettingsModalP
                                                                 });
                                                             }}
                                                             className={cn(
-                                                                "w-7 h-7 rounded-lg flex items-center justify-center transition-all",
-                                                                liveChamber.isHeating ? "bg-orange-600 text-white shadow-lg shadow-orange-600/30" : "bg-muted dark:bg-white/5 text-muted-foreground dark:text-slate-600 hover:text-foreground dark:hover:text-slate-400"
+                                                                "w-7 h-7 rounded-lg flex items-center justify-center transition-all border",
+                                                                liveChamber.isHeating
+                                                                    ? "bg-orange-600 border-orange-500 text-white shadow-lg shadow-orange-600/30"
+                                                                    : "bg-slate-800/40 border-slate-700 text-slate-500 hover:text-orange-400 hover:border-orange-500/50 hover:bg-orange-500/10",
+                                                                isPlaybackMode && "opacity-50 cursor-not-allowed"
                                                             )}
                                                         >
                                                             <Power size={12} />
@@ -516,6 +572,7 @@ export const ChamberSettingsModal = ({ chamber, onClose }: ChamberSettingsModalP
                                                         ].map(mode => (
                                                             <button
                                                                 key={mode.id}
+                                                                disabled={isPlaybackMode}
                                                                 onClick={() => {
                                                                     if (mode.id === 'off') {
                                                                         actions.updateChamber(liveChamber.lineId as any, liveChamber.id, { heatingMode: 'off', isHeating: false });
@@ -529,7 +586,8 @@ export const ChamberSettingsModal = ({ chamber, onClose }: ChamberSettingsModalP
                                                                         ? "bg-orange-600/20 text-orange-600 dark:text-orange-400 border border-orange-500/30"
                                                                         : !liveChamber.isHeating && mode.id === 'off'
                                                                             ? "bg-slate-500/10 dark:bg-slate-600/20 text-slate-500 dark:text-slate-400 border border-border dark:border-slate-500/30"
-                                                                            : "text-muted-foreground dark:text-slate-600 hover:text-foreground dark:hover:text-slate-400 border border-transparent"
+                                                                            : "text-muted-foreground dark:text-slate-600 hover:text-foreground dark:hover:text-slate-400 border border-transparent",
+                                                                    isPlaybackMode && "opacity-50 cursor-not-allowed"
                                                                 )}
                                                             >
                                                                 {mode.label}
@@ -540,12 +598,62 @@ export const ChamberSettingsModal = ({ chamber, onClose }: ChamberSettingsModalP
                                             </div>
                                         </section>
 
+                                        <section className="space-y-1.5">
+                                            <h4 className="text-xs font-bold text-muted-foreground dark:text-slate-500 tracking-wide">气动阀门控制矩阵</h4>
+                                            <div className="grid grid-cols-2 gap-2">
+                                                {Object.entries({
+                                                    gate_valve: '主抽插板阀',
+                                                    transfer_valve: '腔体传输阀',
+                                                    roughing_valve: '真空粗抽阀',
+                                                    foreline_valve: '泵前级阀门',
+                                                    vent_valve: '系统泄放阀'
+                                                }).map(([key, label]) => {
+                                                    const isOpen = liveChamber.valves?.[key as keyof ChamberValves] === 'open';
+                                                    return (
+                                                        <div key={key} className={cn(
+                                                            "bg-slate-900/40 border rounded-xl p-2 flex items-center justify-between transition-all duration-300",
+                                                            isOpen ? "border-emerald-500/30 shadow-[0_0_15px_rgba(16,185,129,0.1)]" : "border-white/5"
+                                                        )}>
+                                                            <div className="flex items-center gap-2">
+                                                                <div className={cn(
+                                                                    "w-7 h-7 rounded-lg flex items-center justify-center border",
+                                                                    isOpen ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-400" : "bg-white/5 border-white/5 text-slate-600"
+                                                                )}>
+                                                                    <Activity size={12} className={isOpen ? "animate-pulse" : ""} />
+                                                                </div>
+                                                                <div className="flex flex-col">
+                                                                    <span className="text-[10px] font-bold text-slate-300 leading-tight">{label}</span>
+                                                                    <span className={cn("text-[8px] font-black uppercase tracking-tighter", isOpen ? "text-emerald-500" : "text-slate-600")}>
+                                                                        {isOpen ? 'OPEN' : 'CLOSED'}
+                                                                    </span>
+                                                                </div>
+                                                            </div>
+                                                            <button
+                                                                disabled={isPlaybackMode}
+                                                                onClick={() => actions.toggleValve(liveChamber.lineId as any, liveChamber.id, key as any)}
+                                                                className={cn(
+                                                                    "w-6 h-6 rounded flex items-center justify-center transition-all border",
+                                                                    isOpen
+                                                                        ? "bg-emerald-600 border-emerald-500 text-white shadow-lg shadow-emerald-900/20"
+                                                                        : "bg-slate-800/40 border-slate-700 text-slate-500 hover:text-emerald-400 hover:border-emerald-500/50 hover:bg-emerald-500/10",
+                                                                    isPlaybackMode && "opacity-50 cursor-not-allowed"
+                                                                )}
+                                                            >
+                                                                <Power size={10} />
+                                                            </button>
+                                                        </div>
+                                                    );
+                                                })}
+                                            </div>
+                                        </section>
+
                                         {isIndiumSealing && (
                                             <section className="p-5 rounded-2xl bg-indigo-500/5 border border-indigo-500/20 space-y-4">
                                                 <div className="flex items-center gap-2 font-black text-indigo-600 dark:text-indigo-300 uppercase tracking-[0.2em] text-[10px]">
                                                     <Zap size={14} /> 铟封仓核心工艺控制
                                                 </div>
                                                 <button
+                                                    disabled={isPlaybackMode}
                                                     onClick={async () => {
                                                         if (!liveChamber) {
                                                             console.error('[IndiumSealing] liveChamber is null/undefined!');
@@ -569,7 +677,8 @@ export const ChamberSettingsModal = ({ chamber, onClose }: ChamberSettingsModalP
                                                         "w-full py-2 text-white rounded-xl font-bold text-[10px] tracking-widest shadow-xl transition-all flex items-center justify-center gap-2 active:scale-[0.99]",
                                                         liveChamber?.indiumSealing
                                                             ? "bg-red-600 hover:bg-red-500 shadow-red-900/30"
-                                                            : "bg-indigo-600 hover:bg-indigo-500 shadow-indigo-900/30"
+                                                            : "bg-indigo-600 hover:bg-indigo-500 shadow-indigo-900/30",
+                                                        isPlaybackMode && "opacity-50 cursor-not-allowed"
                                                     )}
                                                 >
                                                     <Box size={12} />
@@ -579,6 +688,7 @@ export const ChamberSettingsModal = ({ chamber, onClose }: ChamberSettingsModalP
                                                     {indiumStations.map((active, i) => (
                                                         <button
                                                             key={i}
+                                                            disabled={isPlaybackMode}
                                                             onClick={() => {
                                                                 const newStations = [...indiumStations];
                                                                 newStations[i] = !newStations[i];
@@ -588,7 +698,8 @@ export const ChamberSettingsModal = ({ chamber, onClose }: ChamberSettingsModalP
                                                                 "py-1.5 rounded-lg text-[10px] font-bold transition-all border",
                                                                 active
                                                                     ? "bg-indigo-500/20 border-indigo-500/50 text-indigo-600 dark:text-indigo-300 shadow-[0_0_8px_rgba(99,102,241,0.2)] dark:shadow-[0_0_8px_rgba(99,102,241,0.3)]"
-                                                                    : "bg-muted/50 dark:bg-slate-900/50 border-border dark:border-white/5 text-muted-foreground dark:text-slate-600 hover:text-foreground dark:hover:text-slate-400 hover:border-border dark:hover:border-white/10"
+                                                                    : "bg-muted/50 dark:bg-slate-900/50 border-border dark:border-white/5 text-muted-foreground dark:text-slate-600 hover:text-foreground dark:hover:text-slate-400 hover:border-border dark:hover:border-white/10",
+                                                                isPlaybackMode && "opacity-50 cursor-not-allowed"
                                                             )}
                                                         >
                                                             #{i + 1}
@@ -752,7 +863,6 @@ export const ChamberSettingsModal = ({ chamber, onClose }: ChamberSettingsModalP
                             )}
                         </AnimatePresence>
                     </div>
-
                     <footer className="h-10 border-t border-border dark:border-white/5 bg-muted/30 dark:bg-black/40 flex items-center justify-between px-6 shrink-0 text-[9px] font-bold text-muted-foreground dark:text-slate-600 uppercase tracking-widest">
                         <div className="flex items-center gap-4">
                             <span className="flex items-center gap-1.5"><div className="w-1.5 h-1.5 rounded-full bg-emerald-500/30" /> 指挥中心实时同步已开启</span>
@@ -762,8 +872,8 @@ export const ChamberSettingsModal = ({ chamber, onClose }: ChamberSettingsModalP
                             智能制造平台
                         </div>
                     </footer>
-                </motion.div >
-            </div >
-        </AnimatePresence >
+                </motion.div>
+            </div>
+        </AnimatePresence>
     );
 };

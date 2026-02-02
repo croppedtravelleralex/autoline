@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useCallback, useEffect, useMemo, type ReactNode } from 'react';
+import { createContext, useContext, useState, useCallback, useEffect, useMemo, useRef, type ReactNode } from 'react';
 import type { SystemState, LineType, Cart, InspectionRecord } from '../types';
 import { initialSystemState } from '../data/mockData';
 import { fetchSystemState, controlValve, controlPump, moveCart as apiMoveCart } from '../services/api';
@@ -11,11 +11,17 @@ interface SystemStateContextType {
         currentTime: number;
     };
     error: string | null;
+    // 自动点检配置
+    autoInspection: {
+        interval: number; // 分钟，0 表示手动模式
+        setInterval: (minutes: number) => void;
+        timeToNext: number; // 距离下次点检的秒数
+    };
     actions: {
         toggleValve: (lineId: LineType, chamberId: string, valveName: any) => Promise<void>;
         togglePump: (lineId: LineType, chamberId: string, pumpType: 'molecular' | 'roughing') => Promise<void>;
         moveCart: (cartId: string, direction: 'forward' | 'backward') => Promise<void>;
-        createCart: (lineId: string, chamberId: string, data: any) => Promise<any>;
+        createCart: (lineId: string, chamberId: string, polarity: string, data: any) => Promise<any>;
         deleteCart: (cartId: string) => Promise<any>;
         updateCart: (cartId: string, updates: Partial<Cart>) => Promise<any>;
         updateChamber: (lineId: string, chamberId: string, updates: Partial<any>) => Promise<any>;
@@ -26,6 +32,7 @@ interface SystemStateContextType {
         setLineSync: (lineId: string, synchronized: boolean) => void;
         clearLinePlayback: (lineId: string) => void;
         triggerInspection: (type?: 'manual' | 'auto') => Promise<InspectionRecord>;
+        deleteLine: (lineId: string) => Promise<any>;
     };
 }
 
@@ -37,6 +44,18 @@ export function SystemStateProvider({ children }: { children: ReactNode }) {
     const [playbackSnapshots, setPlaybackSnapshots] = useState<Record<string, { line: any; carts: Cart[]; timestamp: number; isSynchronized: boolean; isMissing?: boolean }>>({});
     const [globalPlaybackTime, setGlobalPlaybackTime] = useState<number>(Date.now() / 1000);
     const [error, setError] = useState<string | null>(null);
+
+    // 自动点检状态 - 持久化到 localStorage
+    const [autoInspectionInterval, setAutoInspectionIntervalState] = useState<number>(() => {
+        return parseInt(localStorage.getItem('autoInspectionInterval') || '0', 10);
+    });
+    const [timeToNextInspection, setTimeToNextInspection] = useState<number>(() => {
+        const interval = parseInt(localStorage.getItem('autoInspectionInterval') || '0', 10);
+        return interval * 60; // 初始化为完整间隔（秒）
+    });
+
+    // 🚀 快照缓存，用于极大提升拖拽流畅度
+    const snapshotCache = useRef<Record<number, any>>({});
     // 🚀 Derived State - Derived from real time state or playback snapshots
     // Ensure state derivation is extremely robust to avoid UI crashes
     const state = useMemo(() => {
@@ -73,18 +92,29 @@ export function SystemStateProvider({ children }: { children: ReactNode }) {
                 lines: safeLines.map((line: any) => {
                     if (!line || !line.id) return line;
                     const snap = playbackSnapshots?.[line.id];
+
+                    // 1. 如果有有效的回放快照，使用快照数据
                     if (snap && !snap.isMissing && snap.line) {
-                        return snap.line;
+                        return { ...snap.line, name: line.name };
                     }
 
-                    // 兼容后端返回的 snake_case 字段
                     const anodeChambers = line.anodeChambers || (line as any).anode_chambers || [];
                     const cathodeChambers = line.cathodeChambers || (line as any).cathode_chambers || [];
 
+                    // 2. 如果该线路正在回放但是缺失数据，显示为离线
+                    if (snap && snap.isMissing) {
+                        return {
+                            ...line,
+                            anodeChambers: offlineChambers(anodeChambers),
+                            cathodeChambers: offlineChambers(cathodeChambers)
+                        };
+                    }
+
+                    // 3. 实时模式：保持原有状态
                     return {
                         ...line,
-                        anodeChambers: offlineChambers(anodeChambers),
-                        cathodeChambers: offlineChambers(cathodeChambers)
+                        anodeChambers,
+                        cathodeChambers
                     };
                 }),
                 carts: (() => {
@@ -180,9 +210,9 @@ export function SystemStateProvider({ children }: { children: ReactNode }) {
         await refreshState();
     }, [refreshState]);
 
-    const handleCreateCart = useCallback(async (lineId: string, chamberId: string, data: any) => {
+    const handleCreateCart = useCallback(async (lineId: string, chamberId: string, polarity: string, data: any) => {
         const { createCart } = await import('../services/api');
-        await createCart(lineId, chamberId, data);
+        await createCart(lineId, chamberId, polarity, data);
         await refreshState();
     }, [refreshState]);
 
@@ -211,13 +241,56 @@ export function SystemStateProvider({ children }: { children: ReactNode }) {
         return record;
     }, [refreshState]);
 
+    const handleDeleteLine = useCallback(async (lineId: string) => {
+        const { deleteLine } = await import('../services/api');
+        await deleteLine(lineId);
+        await refreshState();
+    }, [refreshState]);
+
+    // 自动点检间隔设置器
+    const setAutoInspectionInterval = useCallback((minutes: number) => {
+        setAutoInspectionIntervalState(minutes);
+        localStorage.setItem('autoInspectionInterval', String(minutes));
+        setTimeToNextInspection(minutes * 60); // 重置倒计时
+    }, []);
+
+    // 全局自动点检定时器（每秒更新倒计时）
+    useEffect(() => {
+        if (autoInspectionInterval <= 0) return;
+
+        const timer = setInterval(async () => {
+            setTimeToNextInspection(prev => {
+                if (prev <= 1) {
+                    // 触发自动点检
+                    handleTriggerInspection('auto').catch(console.error);
+                    return autoInspectionInterval * 60; // 重置倒计时
+                }
+                return prev - 1;
+            });
+        }, 1000);
+
+        return () => clearInterval(timer);
+    }, [autoInspectionInterval, handleTriggerInspection]);
+
     const setPlaybackTime = useCallback(async (lineId: string | 'all', timestamp: number) => {
         try {
             const { fetchSnapshotAt } = await import('../services/api');
-            const fullSnapshot = await fetchSnapshotAt(timestamp);
+
+            // 1. 尝试从缓存获取快照
+            const cacheKey = Math.round(timestamp);
+            let fullSnapshot = snapshotCache.current[cacheKey];
+
+            if (!fullSnapshot) {
+                fullSnapshot = await fetchSnapshotAt(timestamp);
+                // 写入缓存，限制大小避免内存溢出
+                snapshotCache.current[cacheKey] = fullSnapshot;
+                const keys = Object.keys(snapshotCache.current);
+                if (keys.length > 50) delete snapshotCache.current[Number(keys[0])];
+            }
 
             if (lineId === 'all') {
                 setGlobalPlaybackTime(timestamp);
+                setPlaybackActive(true);
                 setPlaybackSnapshots(prev => {
                     const next = { ...prev };
 
@@ -291,7 +364,7 @@ export function SystemStateProvider({ children }: { children: ReactNode }) {
     }, [setPlaybackTime]);
 
 
-    const value: SystemStateContextType = {
+    const value = useMemo<SystemStateContextType>(() => ({
         state,
         playback: {
             isActive: playbackActive,
@@ -299,6 +372,11 @@ export function SystemStateProvider({ children }: { children: ReactNode }) {
             currentTime: globalPlaybackTime
         },
         error,
+        autoInspection: {
+            interval: autoInspectionInterval,
+            setInterval: setAutoInspectionInterval,
+            timeToNext: timeToNextInspection
+        },
         actions: {
             toggleValve: handleToggleValve,
             togglePump: handleTogglePump,
@@ -325,8 +403,9 @@ export function SystemStateProvider({ children }: { children: ReactNode }) {
                 });
             },
             triggerInspection: handleTriggerInspection,
+            deleteLine: handleDeleteLine,
         }
-    };
+    }), [state, playbackActive, playbackSnapshots, globalPlaybackTime, handleToggleValve, handleTogglePump, handleMoveCart, handleCreateCart, handleDeleteCart, handleUpdateCart, handleUpdateChamber, refreshState, setPlaybackTime, handleTriggerInspection, handleDeleteLine, error, autoInspectionInterval, setAutoInspectionInterval, timeToNextInspection]);
 
     return (
         <SystemStateContext.Provider value={value}>

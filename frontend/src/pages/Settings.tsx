@@ -1,8 +1,222 @@
 import React, { useState } from 'react';
 import { useSettings } from '../context/SettingsContext';
+import { useSystemStateContext } from '../context/SystemStateContext';
 import { SettingsService } from '../services/settingsService';
 import type { Recipe } from '../types/settings';
-import { Monitor, Bell, AlertTriangle, FileText, Plus, Trash2, Edit, Save, X, Zap, Server, Database, Download, HardDrive } from 'lucide-react';
+import { Monitor, Bell, AlertTriangle, FileText, Plus, Trash2, Edit, Save, X, Zap, Server, Database, Download, HardDrive, Network, Wifi, WifiOff } from 'lucide-react';
+
+/**
+ * 腔体通信配置表格组件
+ * 展示每个线体各腔体的 IP 地址和端口配置，支持编辑和连接控制
+ */
+const ChamberConnectionTable: React.FC = () => {
+    const { state, actions } = useSystemStateContext();
+    const [editingChamber, setEditingChamber] = useState<string | null>(null);
+    const [editValues, setEditValues] = useState<{ ip: string; port: number; slaveId: number }>({ ip: '', port: 8080, slaveId: 1 });
+
+    if (!state?.lines || state.lines.length === 0) {
+        return (
+            <div className="bg-slate-900/50 p-6 rounded-lg border border-slate-700 mt-6">
+                <h3 className="text-lg font-bold text-white mb-4 flex items-center">
+                    <Network className="mr-2 text-green-400" size={20} />
+                    腔体通信配置
+                </h3>
+                <div className="text-slate-500 text-sm">暂无线体数据</div>
+            </div>
+        );
+    }
+
+    // 开始编辑某腔体
+    const handleEdit = (chamberId: string, connection: any) => {
+        setEditingChamber(chamberId);
+        setEditValues({
+            ip: connection?.ipAddress || '192.168.1.1',
+            port: connection?.port || 8080,
+            slaveId: connection?.slaveId || 1
+        });
+    };
+
+    // 保存编辑
+    const handleSave = async (lineId: string, chamberId: string) => {
+        try {
+            await actions.updateChamber(lineId, chamberId, {
+                connection: {
+                    ipAddress: editValues.ip,
+                    port: editValues.port,
+                    slaveId: editValues.slaveId,
+                    enabled: true
+                }
+            });
+            setEditingChamber(null);
+        } catch (e) {
+            console.error('Failed to save chamber connection:', e);
+        }
+    };
+
+    // 切换连接状态
+    const handleToggleConnection = async (lineId: string, chamberId: string, currentEnabled: boolean) => {
+        try {
+            await actions.updateChamber(lineId, chamberId, {
+                connection: { enabled: !currentEnabled }
+            });
+        } catch (e) {
+            console.error('Failed to toggle connection:', e);
+        }
+    };
+
+    // 渲染单行腔体
+    const renderChamberRow = (chamber: any, lineId: string, index: number) => {
+        const isEditing = editingChamber === chamber.id;
+        const conn = chamber.connection;
+
+        return (
+            <tr key={chamber.id} className="border-b border-slate-800 hover:bg-slate-800/30">
+                <td className="p-2 text-white font-medium">{chamber.name}</td>
+                <td className="p-2">
+                    {isEditing ? (
+                        <input
+                            type="text"
+                            value={editValues.ip}
+                            onChange={(e) => setEditValues(v => ({ ...v, ip: e.target.value }))}
+                            className="w-28 bg-slate-800 border border-slate-600 rounded px-2 py-0.5 text-green-400 font-mono text-xs"
+                        />
+                    ) : (
+                        <span className="font-mono text-green-400">{conn?.ipAddress || '192.168.1.1'}</span>
+                    )}
+                </td>
+                <td className="p-2">
+                    {isEditing ? (
+                        <input
+                            type="number"
+                            value={editValues.port}
+                            onChange={(e) => setEditValues(v => ({ ...v, port: Number(e.target.value) }))}
+                            className="w-16 bg-slate-800 border border-slate-600 rounded px-2 py-0.5 text-slate-300 font-mono text-xs"
+                        />
+                    ) : (
+                        <span className="font-mono text-slate-300">{conn?.port || 8080}</span>
+                    )}
+                </td>
+                <td className="p-2">
+                    {isEditing ? (
+                        <input
+                            type="number"
+                            value={editValues.slaveId}
+                            onChange={(e) => setEditValues(v => ({ ...v, slaveId: Number(e.target.value) }))}
+                            className="w-12 bg-slate-800 border border-slate-600 rounded px-2 py-0.5 text-slate-300 font-mono text-xs"
+                        />
+                    ) : (
+                        <span className="font-mono text-slate-300">{conn?.slaveId || 1}</span>
+                    )}
+                </td>
+                <td className="p-2">
+                    <button
+                        onClick={() => handleToggleConnection(lineId, chamber.id, conn?.enabled ?? true)}
+                        className={`flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium transition-colors ${conn?.enabled !== false
+                            ? 'bg-green-500/20 text-green-400 hover:bg-green-500/30'
+                            : 'bg-slate-700/50 text-slate-500 hover:bg-slate-700'
+                            }`}
+                    >
+                        {conn?.enabled !== false ? <Wifi size={12} /> : <WifiOff size={12} />}
+                        {conn?.enabled !== false ? '已连接' : '未连接'}
+                    </button>
+                </td>
+                <td className="p-2 text-right">
+                    {isEditing ? (
+                        <div className="flex gap-1 justify-end">
+                            <button
+                                onClick={() => handleSave(lineId, chamber.id)}
+                                className="p-1 bg-green-600 hover:bg-green-500 rounded text-white"
+                            >
+                                <Save size={14} />
+                            </button>
+                            <button
+                                onClick={() => setEditingChamber(null)}
+                                className="p-1 bg-slate-700 hover:bg-slate-600 rounded text-slate-300"
+                            >
+                                <X size={14} />
+                            </button>
+                        </div>
+                    ) : (
+                        <button
+                            onClick={() => handleEdit(chamber.id, conn)}
+                            className="p-1 text-slate-400 hover:text-blue-400 hover:bg-blue-500/10 rounded"
+                        >
+                            <Edit size={14} />
+                        </button>
+                    )}
+                </td>
+            </tr>
+        );
+    };
+
+    return (
+        <div className="bg-slate-900/50 p-6 rounded-lg border border-slate-700 mt-6">
+            <h3 className="text-lg font-bold text-white mb-4 flex items-center">
+                <Network className="mr-2 text-green-400" size={20} />
+                腔体通信配置
+            </h3>
+            <p className="text-xs text-slate-500 mb-4">
+                各腔体的 PLC/传感器通信地址配置。点击右侧编辑按钮可修改 IP、端口和从站 ID。
+            </p>
+
+            {state.lines.map((line) => (
+                <div key={line.id} className="mb-6 last:mb-0">
+                    <h4 className="text-sm font-bold text-slate-300 mb-2 border-b border-slate-700 pb-2">
+                        {line.name}
+                    </h4>
+
+                    {/* 阳极线 */}
+                    {line.anodeChambers && line.anodeChambers.length > 0 && (
+                        <div className="mb-4">
+                            <div className="text-xs text-orange-400 font-medium mb-2">阳极线</div>
+                            <div className="overflow-x-auto">
+                                <table className="w-full text-left text-xs">
+                                    <thead className="bg-slate-800/50 text-slate-400">
+                                        <tr>
+                                            <th className="p-2 w-24">腔体</th>
+                                            <th className="p-2 w-32">IP 地址</th>
+                                            <th className="p-2 w-20">端口</th>
+                                            <th className="p-2 w-16">从站ID</th>
+                                            <th className="p-2 w-24">状态</th>
+                                            <th className="p-2 w-16 text-right">操作</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {line.anodeChambers.map((chamber, i) => renderChamberRow(chamber, line.id, i))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* 阴极线 */}
+                    {line.cathodeChambers && line.cathodeChambers.length > 0 && (
+                        <div>
+                            <div className="text-xs text-cyan-400 font-medium mb-2">阴极线</div>
+                            <div className="overflow-x-auto">
+                                <table className="w-full text-left text-xs">
+                                    <thead className="bg-slate-800/50 text-slate-400">
+                                        <tr>
+                                            <th className="p-2 w-24">腔体</th>
+                                            <th className="p-2 w-32">IP 地址</th>
+                                            <th className="p-2 w-20">端口</th>
+                                            <th className="p-2 w-16">从站ID</th>
+                                            <th className="p-2 w-24">状态</th>
+                                            <th className="p-2 w-16 text-right">操作</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {line.cathodeChambers.map((chamber, i) => renderChamberRow(chamber, line.id, i))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    )}
+                </div>
+            ))}
+        </div>
+    );
+};
 
 export const Settings: React.FC = () => {
     const { settings, recipes, simulationConfig, updateSettings, reloadRecipes, updateSimulationConfig } = useSettings();
@@ -134,14 +348,14 @@ export const Settings: React.FC = () => {
     };
 
     return (
-        <div className="p-6 max-w-6xl mx-auto text-foreground">
-            <h1 className="text-2xl font-bold mb-6 flex items-center">
+        <div className="p-3 md:p-6 w-full h-full overflow-y-auto text-foreground transition-all duration-300 scrollbar-thin scrollbar-thumb-sky-500/10 hover:scrollbar-thumb-sky-500/20">
+            <h1 className="text-2xl font-bold mb-6 flex items-center px-2">
                 <Monitor className="mr-3 text-sky-500" />
                 系统设置
             </h1>
 
-            {/* Tabs */}
-            <div className="flex border-b border-border mb-6 space-x-2 overflow-x-auto pb-px">
+            {/* Tabs - 移动端横向滚动 */}
+            <div className="flex border-b border-border mb-4 md:mb-6 space-x-1 md:space-x-2 overflow-x-auto pb-px scrollbar-none">
                 <TabButton id="general" label="常规设置" icon={Monitor} />
                 <TabButton id="notifications" label="通知设置" icon={Bell} />
                 <TabButton id="alarms" label="报警阈值" icon={AlertTriangle} />
@@ -152,7 +366,7 @@ export const Settings: React.FC = () => {
             </div>
 
             {/* Content */}
-            <div className="bg-card p-6 rounded-lg border border-border min-h-[400px] shadow-sm">
+            <div className="bg-card p-3 md:p-6 rounded-lg border border-border min-h-[400px] shadow-sm">
 
                 {/* General Tab */}
                 {activeTab === 'general' && (
@@ -177,7 +391,7 @@ export const Settings: React.FC = () => {
 
                 {/* Notifications Tab */}
                 {activeTab === 'notifications' && (
-                    <div className="space-y-4 max-w-2xl">
+                    <div className="space-y-4 w-full">
                         <h3 className="text-lg font-medium mb-4">通知权限配置</h3>
 
                         <label className="flex items-center space-x-3 p-3 bg-slate-900/30 rounded border border-slate-700 cursor-pointer">
@@ -223,7 +437,7 @@ export const Settings: React.FC = () => {
 
                 {/* Alarms Tab */}
                 {activeTab === 'alarms' && (
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
                         <div>
                             <h3 className="text-lg font-medium mb-4 text-blue-400">温度报警阈值 (℃)</h3>
                             <div className="space-y-4">
@@ -472,7 +686,7 @@ export const Settings: React.FC = () => {
                 )}
                 {/* Hardware Tab */}
                 {activeTab === 'hardware' && settings.hardware && (
-                    <div className="space-y-6 max-w-3xl">
+                    <div className="space-y-6 w-full">
                         <div className="bg-slate-900/50 p-6 rounded-lg border border-slate-700">
                             <h3 className="text-lg font-bold text-white mb-4 flex items-center">
                                 <Server className="mr-2 text-blue-400" size={20} />
@@ -605,13 +819,16 @@ export const Settings: React.FC = () => {
                                 )}
                             </div>
                         </div>
+
+                        {/* 腔体通信配置表格 */}
+                        <ChamberConnectionTable />
                     </div>
                 )}
 
                 {/* Data Tab */}
                 {activeTab === 'data' && settings.data && (
                     <div className="space-y-6">
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
                             {/* Retention Policy */}
                             <div className="bg-slate-900/50 p-6 rounded-lg border border-slate-700">
                                 <h3 className="text-lg font-bold text-white mb-4 flex items-center">

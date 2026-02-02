@@ -64,6 +64,14 @@ class ChamberValves(BaseModel):
     vent_valve: ValveState = ValveState.closed         # 放气阀
 
 
+class ChamberConnection(BaseModel):
+    """腔体通信配置 - 用于模拟 PLC 连接"""
+    ipAddress: str = "192.168.1.1"
+    port: int = 8080
+    slaveId: int = 1
+    enabled: bool = True
+
+
 class Chamber(BaseModel):
     """腔体模型"""
     id: str
@@ -84,6 +92,7 @@ class Chamber(BaseModel):
     isHeating: bool = False                            # 是否正在加热中
     heatingMode: Literal['manual', 'program', 'off'] = 'off' # 加热模式
     indiumSealing: Optional[bool] = None               # 铟封流程状态
+    connection: ChamberConnection = ChamberConnection() # 通信配置
 
     @property
     def hasCart(self) -> bool:
@@ -157,6 +166,14 @@ class LineData(BaseModel):
     anodeChambers: List[Chamber] = []    # 阳极线腔体
     cathodeChambers: List[Chamber] = []  # 阴极线腔体
 
+class LineTemplate(BaseModel):
+    """线体模板"""
+    id: str
+    name: str
+    description: Optional[str] = None
+    anodeChambers: List[Chamber] = []
+    cathodeChambers: List[Chamber] = []
+
 
 class LogEntry(BaseModel):
     """日志条目"""
@@ -180,6 +197,22 @@ class InspectionRecord(BaseModel):
     summary: str
 
 
+class LoginLog(BaseModel):
+    """用户登录登出日志"""
+    id: str
+    timestamp: float
+    username: str
+    action: Literal['login', 'logout']
+    ip: Optional[str] = None
+
+
+class OnlineUser(BaseModel):
+    """在线用户信息"""
+    username: str
+    ip: Optional[str] = None
+    loginTime: float
+
+
 class SystemState(BaseModel):
     """系统完整状态"""
     lines: List[LineData] = []
@@ -188,6 +221,8 @@ class SystemState(BaseModel):
     systemLogs: List[LogEntry] = []
     operationLogs: List[LogEntry] = []
     inspectionHistory: List[InspectionRecord] = []
+    loginLogs: List[LoginLog] = []         # 登录登出日志
+    onlineUsers: List[OnlineUser] = []     # 在线用户列表
 
 
 

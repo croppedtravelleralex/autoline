@@ -1,4 +1,4 @@
-import { Outlet } from 'react-router-dom';
+import { Outlet, useLocation } from 'react-router-dom';
 import { TopNavbar } from '../components/TopNavbar';
 import { useToast } from '../context/ToastContext';
 import { AnimatePresence, motion } from 'framer-motion';
@@ -6,6 +6,7 @@ import { AlertCircle, X, ChevronRight } from 'lucide-react';
 
 export function MainLayout() {
     const { toasts, removeToast } = useToast();
+    const location = useLocation();
 
     // 过滤出所有持久化报警 (duration=0)
     const activeAlarms = toasts.filter(t => t.duration === 0);
@@ -58,7 +59,18 @@ export function MainLayout() {
 
             <div className="flex-1 overflow-hidden relative">
                 <main className="absolute inset-0 overflow-hidden">
-                    <Outlet />
+                    <AnimatePresence mode="wait">
+                        <motion.div
+                            key={location.pathname}
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            transition={{ duration: 0.15, ease: "easeOut" }}
+                            className="w-full h-full flex flex-col"
+                        >
+                            <Outlet />
+                        </motion.div>
+                    </AnimatePresence>
                 </main>
             </div>
         </div>

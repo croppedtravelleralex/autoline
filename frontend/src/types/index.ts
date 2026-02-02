@@ -76,6 +76,14 @@ export interface ChamberValves {
     vent_valve: ValveState; // 放气阀
 }
 
+// 腔体通信配置
+export interface ChamberConnection {
+    ipAddress: string;
+    port: number;
+    slaveId: number;
+    enabled: boolean;
+}
+
 export interface Chamber {
     id: string;
     lineId: LineType;
@@ -97,6 +105,7 @@ export interface Chamber {
     isHeating: boolean; // 是否正在加热
     heatingMode?: 'manual' | 'program' | 'off'; // 加热模式
     indiumSealing?: boolean; // 铟封功能是否启用
+    connection?: ChamberConnection; // 通信配置
 }
 
 export interface LineData {
@@ -104,6 +113,14 @@ export interface LineData {
     name: string;
     anodeChambers: Chamber[];    // 阳极线腔体
     cathodeChambers: Chamber[];  // 阴极线腔体
+}
+
+export interface LineTemplate {
+    id: string;
+    name: string;
+    description?: string;
+    anodeChambers: Chamber[];
+    cathodeChambers: Chamber[];
 }
 
 export interface LogEntry {
@@ -126,13 +143,27 @@ export interface InspectionRecord {
     summary: string;
 }
 
+export interface LoginLog {
+    id: string;
+    timestamp: number;
+    username: string;
+    action: 'login' | 'logout';
+    ip?: string;
+}
+
+export interface OnlineUser {
+    username: string;
+    ip?: string;
+    loginTime: number;
+}
+
 export interface SystemState {
     lines: LineData[];
-    // anodeLine: LineData; // Removed
-    // cathodeLine: LineData; // Removed
     carts: Cart[];
     timestamp: number;
     systemLogs: LogEntry[];
     operationLogs: LogEntry[];
     inspectionHistory: InspectionRecord[];
+    loginLogs: LoginLog[];      // 登录登出日志
+    onlineUsers: OnlineUser[];  // 在线用户列表
 }

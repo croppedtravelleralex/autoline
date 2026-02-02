@@ -1,4 +1,5 @@
-from fastapi import APIRouter, HTTPException
+import uuid
+from fastapi import APIRouter, HTTPException, Request
 from typing import Literal
 
 from app.models import SystemState
@@ -112,6 +113,73 @@ async def duplicate_line(line_id: str):
         from fastapi.responses import JSONResponse
         return JSONResponse(status_code=500, content={"detail": str(e), "traceback": tb})
 
+# ==================== 模板管理 API ====================
+
+from app.services.template_service import get_template_service
+from app.models import LineTemplate
+
+@router.get("/templates")
+async def get_templates() -> List[LineTemplate]:
+    """获取所有线体模板"""
+    return get_template_service().get_all_templates()
+
+@router.post("/lines/{line_id}/save-as-template")
+async def save_as_template(line_id: str, name: str, description: str = ""):
+    """根据现有线体保存模板"""
+    line = state_service.get_line(line_id)
+    if not line:
+        raise HTTPException(status_code=404, detail="Line not found")
+    return get_template_service().save_as_template(line, name, description)
+
+@router.delete("/templates/{template_id}")
+async def delete_template(template_id: str):
+    """删除模板"""
+    if get_template_service().delete_template(template_id):
+        return {"message": "Template deleted"}
+    raise HTTPException(status_code=404, detail="Template not found")
+
+@router.post("/lines/create-from-template/{template_id}")
+async def create_line_from_template(template_id: str, name: Optional[str] = None):
+    """基于模板创建新线体"""
+    template = get_template_service().get_template(template_id)
+    if not template:
+        raise HTTPException(status_code=404, detail="Template not found")
+    
+    # 逻辑类似于 duplicate_line 但基于模板
+    existing_numbers = []
+    for l in state_service.state.lines:
+        if l.id.endswith('#') and l.id[:-1].isdigit():
+            existing_numbers.append(int(l.id[:-1]))
+    next_num = max(existing_numbers, default=0) + 1
+    new_id = f"{next_num}#"
+    
+    if not name:
+        name = f"{next_num}号线"
+        
+    # Deep copy chambers from template
+    new_anode_chambers = []
+    for c in template.anodeChambers:
+        new_c_id = f"{new_id}-a-{uuid.uuid4().hex[:4]}"
+        new_chamber = c.model_copy(deep=True)
+        new_chamber.id = new_c_id
+        new_chamber.lineId = new_id
+        new_chamber.cartIds = []
+        new_anode_chambers.append(new_chamber)
+
+    new_cathode_chambers = []
+    for c in template.cathodeChambers:
+        new_c_id = f"{new_id}-c-{uuid.uuid4().hex[:4]}"
+        new_chamber = c.model_copy(deep=True)
+        new_chamber.id = new_c_id
+        new_chamber.lineId = new_id
+        new_chamber.cartIds = []
+        new_cathode_chambers.append(new_chamber)
+        
+    from app.models import LineData
+    new_line = LineData(id=new_id, name=name, anodeChambers=new_anode_chambers, cathodeChambers=new_cathode_chambers)
+    state_service.state.lines.append(new_line)
+    return new_line
+
 @router.post("/valve/{line_id}/{chamber_id}/{valve_name}")
 async def control_valve(
     line_id: str,
@@ -146,17 +214,26 @@ async def control_pump(
 
 class CreateCartRequest(BaseModel):
     lineId: str
-    chamberId: str
+    chamberId: Optional[str] = None  # 可选，如未提供则自动查找入口
+    polarity: Optional[str] = None   # 'anode' 或 'cathode'，用于指定阴阳极
     data: dict
 
 @router.post("/cart")
 async def create_cart(request: CreateCartRequest, operator_name: str = "Admin", operator_role: str = "admin"):
-    """创建新小车（进样）"""
+    """创建新小车（进样）- 自动查找入口腔体"""
     try:
-        new_cart = state_service.create_cart(request.lineId, request.chamberId, request.data, operator_name, operator_role)
+        new_cart = state_service.create_cart_v2(
+            request.lineId, 
+            request.polarity or 'anode',  # 默认阳极
+            request.chamberId,  # 可为 None
+            request.data, 
+            operator_name, 
+            operator_role
+        )
         return new_cart
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
+
 
 @router.delete("/cart/{cart_id}")
 async def delete_cart(cart_id: str, operator_name: str = "Admin", operator_role: str = "admin"):
@@ -281,44 +358,21 @@ async def delete_recipe(recipe_id: str):
 from app.models import SimulationConfig, FaultType
 from app.services.simulation_service import SimulationService
 
-# Helper to access the singleton simulation service instance
-# Since it was initialized in state_service or just a global instance?
-# In main.py or similar, it should be initialized. 
-# Looking at api.py line 10: state_service = StateService()
-# SimulationService usually uses StateService. Let's create a singleton accessor or instance here.
-# For simplicity, we can instantiate it, but we need to ensure it's the SAME instance that is running the thread?
-# Wait, SimulationService starts a thread. If I make a new instance here, is it the same?
-# SimulationService seems designed to be singleton-ish or held by main app.
-# Let's check main.py... oh we didn't read main.py.
-# Usually in FastAPI we use dependency injection or a global var. 
-# Let's assume we can use a global instance here like state_service.
-# We need to make sure `state_service` in api.py leads us to the right place. 
-# Actually, let's redefine SimulationService usage. 
-# Ideally, we should have `simulation_service = SimulationService()` at module level if it has state.
-# But `state_service` is already there. Does `state_service` hold `simulation_service`? No.
-# Let's instantiate it globally here for now, assuming api.py is imported once.
-simulation_service = SimulationService()
-
-@router.on_event("startup")
-async def startup_event():
-    # Auto start simulation loop on startup
-    simulation_service.start()
-
 @router.get("/settings/simulation")
 async def get_simulation_config() -> SimulationConfig:
-    return simulation_service.get_config()
+    return SimulationService().get_config()
 
 @router.post("/settings/simulation")
 async def update_simulation_config(config: SimulationConfig) -> SimulationConfig:
-    return simulation_service.update_config(config)
+    return SimulationService().update_config(config)
 
 @router.post("/simulation/fault")
 async def inject_fault(type: FaultType, line_id: str, chamber_id: str):
-    return simulation_service.inject_fault(type, line_id, chamber_id)
+    return SimulationService().inject_fault(type, line_id, chamber_id)
 
 @router.delete("/simulation/faults")
 async def clear_faults():
-    simulation_service.clear_faults()
+    SimulationService().clear_faults()
     return {"message": "All faults cleared"}
 
 
@@ -333,12 +387,38 @@ class LoginRequest(BaseModel):
     username: str
     password: str
 
+
 @router.post("/login")
-async def login(request: LoginRequest):
-    user = user_service.authenticate(request.username, request.password)
+async def login(request: Request, body: LoginRequest):
+    user = user_service.authenticate(body.username, body.password)
     if not user:
         raise HTTPException(status_code=401, detail="Invalid credentials")
+    
+    # Log login action
+    state_service.log_user_action(user.username, "登录系统", request.client.host)
     return user
+
+class LogoutRequest(BaseModel):
+    username: str
+
+@router.post("/logout")
+async def logout(request: Request, body: LogoutRequest):
+    """Log user logout action"""
+    state_service.log_user_action(body.username, "退出系统", request.client.host)
+    return {"message": "Logged out"}
+
+
+class LoginLogRequest(BaseModel):
+    username: str
+    action: Literal["login", "logout"]
+
+
+@router.post("/login-log")
+async def record_login_log(request: Request, body: LoginLogRequest):
+    """记录登录/登出日志（专用接口，无需密码验证）"""
+    action_text = "登录系统" if body.action == "login" else "退出系统"
+    state_service.log_user_action(body.username, action_text, request.client.host)
+    return {"message": f"Logged {body.action} for {body.username}"}
 
 @router.get("/users")
 async def get_users() -> List[User]:

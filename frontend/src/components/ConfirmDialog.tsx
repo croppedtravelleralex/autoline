@@ -62,40 +62,34 @@ export function ConfirmDialog({
                 </div>
 
                 {/* Body */}
-                <div className="p-6">
+                <div className="px-6 py-4">
                     <p className="text-slate-300 leading-relaxed text-base">
                         {message}
                     </p>
                 </div>
 
                 {/* Footer */}
-                <div className="flex items-center justify-end gap-3 mt-8">
+                <div className="flex items-center justify-end gap-3 p-6 pt-2 border-t border-white/5 bg-white/5">
                     <div className="relative group">
                         <button
                             onClick={onCancel}
-                            className="px-4 py-2 rounded-lg text-slate-400 hover:text-white hover:bg-white/5 transition-colors font-medium border border-transparent hover:border-white/10"
+                            className="px-4 py-2 rounded-lg text-slate-400 hover:text-white hover:bg-white/5 transition-colors font-medium border border-transparent hover:border-white/10 cursor-pointer"
                         >
                             {cancelText}
                         </button>
-                        <div className="absolute top-full left-1/2 -translate-x-1/2 pt-1 pointer-events-none">
-                            <Kbd variant="ghost" className="opacity-0 group-hover:opacity-100 transition-all translate-y-1 group-hover:translate-y-0 scale-75 whitespace-nowrap">Esc</Kbd>
-                        </div>
                     </div>
                     <div className="relative group">
                         <button
                             onClick={onConfirm}
                             className={cn(
-                                "px-6 py-2 rounded-lg text-white font-bold shadow-lg transition-all transform hover:-translate-y-0.5 active:translate-y-0",
+                                "px-8 py-2.5 rounded-xl text-white font-bold shadow-lg transition-all transform hover:-translate-y-0.5 active:translate-y-0 cursor-pointer",
                                 variant === 'danger'
-                                    ? "bg-red-600 hover:bg-red-500 hover:shadow-red-900/40"
+                                    ? "bg-red-600 hover:bg-red-50 hover:shadow-red-900/40"
                                     : "bg-sky-600 hover:bg-sky-500 hover:shadow-sky-900/40"
                             )}
                         >
                             {confirmText}
                         </button>
-                        <div className="absolute top-full left-1/2 -translate-x-1/2 pt-1 pointer-events-none">
-                            <Kbd variant="ghost" className="opacity-0 group-hover:opacity-100 transition-all translate-y-1 group-hover:translate-y-0 scale-75 whitespace-nowrap">Enter</Kbd>
-                        </div>
                     </div>
                 </div>
             </div>

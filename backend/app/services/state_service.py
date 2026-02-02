@@ -1,7 +1,10 @@
 import uuid
 import time
-from typing import List
-from threading import Lock
+import json
+import os
+from typing import List, Optional
+from threading import RLock
+from pathlib import Path
 
 from app.models import (
     ValveState,
@@ -17,19 +20,100 @@ from app.models import (
 # Simple in-memory singleton service
 class StateService:
     _instance = None
-    _lock = Lock()
+    _lock = RLock()
+
+    # 状态持久化路径
+    BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+    PERSISTENCE_PATH = os.path.join(BASE_DIR, "mes_data", "state.json")
 
     def __new__(cls):
         if not cls._instance:
             with cls._lock:
                 if not cls._instance:
                     cls._instance = super(StateService, cls).__new__(cls)
+                    # 确保目录存在
+                    os.makedirs(os.path.dirname(cls.PERSISTENCE_PATH), exist_ok=True)
                     cls._instance._init_state()
         return cls._instance
 
+    def _save_state(self):
+        """将当前状态保存到文件"""
+        try:
+            with self._lock:
+                # 使用 Pydantic 的 model_dump_json 进行序列化
+                json_data = self.state.model_dump_json(indent=4)
+                with open(self.PERSISTENCE_PATH, 'w', encoding='utf-8') as f:
+                    f.write(json_data)
+        except Exception as e:
+            print(f"[ERROR] StateService: Failed to save state: {e}")
+
+    def _load_state(self) -> bool:
+        """从文件加载状态"""
+        print(f"[DEBUG] StateService: Checking for state file at {self.PERSISTENCE_PATH}")
+        if not os.path.exists(self.PERSISTENCE_PATH):
+            print(f"[DEBUG] StateService: State file does not exist, will initialize defaults")
+            return False
+        
+        try:
+            print(f"[DEBUG] StateService: Loading state from {self.PERSISTENCE_PATH}")
+            with open(self.PERSISTENCE_PATH, 'r', encoding='utf-8') as f:
+                json_data = f.read()
+                # 使用 Pydantic 的 model_validate_json 进行反序列化
+                self.state = SystemState.model_validate_json(json_data)
+                
+                # 迁移旧数据：为缺少 connection 的腔体添加默认配置
+                self._migrate_chamber_connections()
+                
+                print(f"[INFO] StateService: Successfully loaded state from {self.PERSISTENCE_PATH}")
+                return True
+        except Exception as e:
+            import traceback
+            print(f"[ERROR] StateService: Failed to load state: {e}")
+            print(f"[ERROR] StateService: Traceback: {traceback.format_exc()}")
+            return False
+
+    def _migrate_chamber_connections(self):
+        """迁移旧数据：为缺少 connection 的腔体添加默认配置"""
+        from app.models import ChamberConnection
+        
+        migrated = False
+        for line in self.state.lines:
+            # 阳极线腔体
+            for i, chamber in enumerate(line.anodeChambers):
+                if not chamber.connection or not chamber.connection.ipAddress:
+                    chamber.connection = ChamberConnection(
+                        ipAddress=f"192.168.1.{10 + i}",
+                        port=8080,
+                        slaveId=i + 1,
+                        enabled=True
+                    )
+                    migrated = True
+            
+            # 阴极线腔体
+            for i, chamber in enumerate(line.cathodeChambers):
+                if not chamber.connection or not chamber.connection.ipAddress:
+                    chamber.connection = ChamberConnection(
+                        ipAddress=f"192.168.1.{20 + i}",
+                        port=8080,
+                        slaveId=10 + i + 1,
+                        enabled=True
+                    )
+                    migrated = True
+        
+        if migrated:
+            print("[INFO] StateService: Migrated chamber connection configs for old data")
+            self._save_state()
+
+
     def _init_state(self):
+        # 尝试加载持久化数据
+        if self._load_state():
+            return
+            
+        print("[INFO] StateService: Initializing with mock data...")
         # Initialize mock data similar to frontend mockData
-        def create_chamber(id: str, line: str, name: str, type_: str) -> Chamber:
+        def create_chamber(id: str, line: str, name: str, type_: str, ip_offset: int) -> Chamber:
+            from app.models import ChamberConnection
             return Chamber(
                 id=id,
                 lineId=line,
@@ -51,22 +135,28 @@ class StateService:
                 roughingPump=False,
                 cartIds=[],
                 maxCartCapacity=1,
-                targetTemperature=25.0 if type_ != 'bake' else 150.0 # 默认烘烤仓预热150
+                targetTemperature=25.0 if type_ != 'bake' else 150.0,
+                connection=ChamberConnection(
+                    ipAddress=f"192.168.1.{10 + ip_offset}",
+                    port=8080,
+                    slaveId=ip_offset + 1,
+                    enabled=True
+                )
             )
 
         anode_chambers = [
-            create_chamber('a-jl', 'anode', '进样仓', 'load_lock'),
-            create_chamber('a-hk', 'anode', '烘烤仓', 'bake'),
-            create_chamber('a-qs', 'anode', '清刷仓', 'cleaning'),
-            create_chamber('a-dj', 'anode', '对接仓', 'docking'),
-            create_chamber('a-yf', 'anode', '铟封仓', 'sealing'),
-            create_chamber('a-cy', 'anode', '出样仓', 'unload'),
+            create_chamber('a-jl', 'anode', '进样仓', 'load_lock', 0),
+            create_chamber('a-hk', 'anode', '烘烤仓', 'bake', 1),
+            create_chamber('a-qs', 'anode', '清刷仓', 'cleaning', 2),
+            create_chamber('a-dj', 'anode', '对接仓', 'docking', 3),
+            create_chamber('a-yf', 'anode', '铟封仓', 'sealing', 4),
+            create_chamber('a-cy', 'anode', '出样仓', 'unload', 5),
         ]
         cathode_chambers = [
-            create_chamber('c-jl', 'cathode', '进样仓', 'load_lock'),
-            create_chamber('c-hk', 'cathode', '烘烤仓', 'bake'),
-            create_chamber('c-sz', 'cathode', '生长仓', 'growth'),
-            create_chamber('c-cy', 'cathode', '出样仓', 'unload'),
+            create_chamber('c-jl', 'cathode', '进样仓', 'load_lock', 10),
+            create_chamber('c-hk', 'cathode', '烘烤仓', 'bake', 11),
+            create_chamber('c-sz', 'cathode', '生长仓', 'growth', 12),
+            create_chamber('c-cy', 'cathode', '出样仓', 'unload', 13),
         ]
 
         carts = [
@@ -130,6 +220,8 @@ class StateService:
                 )
             ]
         )
+        # 初始创建后保存一次
+        self._save_state()
 
     def get_state(self) -> SystemState:
         return self.state
@@ -153,10 +245,57 @@ class StateService:
             )
         except Exception as e:
             print(f"Error bridging log to history: {e}")
+        
+        # 每次有日志产生（代表系统状态有重要变化），进行持久化
+        self._save_state()
 
     def clear_operation_logs(self):
         self.state.operationLogs = []
+        self._save_state()
         return True
+
+    def log_user_action(self, username: str, action: str, ip: str = None):
+        """记录用户登录/登出等系统行为"""
+        from app.models import LoginLog, OnlineUser
+        
+        timestamp = time.time() * 1000
+        
+        # 记录到 loginLogs
+        login_log = LoginLog(
+            id=str(uuid.uuid4()),
+            timestamp=timestamp,
+            username=username,
+            action='login' if '登录' in action else 'logout',
+            ip=ip
+        )
+        self.state.loginLogs.insert(0, login_log)
+        self.state.loginLogs = self.state.loginLogs[:100]  # 保留最近100条
+        
+        # 更新在线用户列表
+        if '登录' in action:
+            # 添加到在线用户（如已存在则更新）
+            existing = next((u for u in self.state.onlineUsers if u.username == username), None)
+            if existing:
+                self.state.onlineUsers.remove(existing)
+            self.state.onlineUsers.append(OnlineUser(
+                username=username,
+                ip=ip,
+                loginTime=timestamp
+            ))
+        elif '退出' in action or '登出' in action:
+            # 从在线用户移除
+            self.state.onlineUsers = [u for u in self.state.onlineUsers if u.username != username]
+        
+        # 同时记录到系统日志
+        ip_info = f" [IP: {ip}]" if ip else ""
+        self._add_log(LogEntry(
+            id=str(uuid.uuid4()),
+            timestamp=timestamp,
+            type='system',
+            content=f"用户 {username} {action}{ip_info}",
+            level='info'
+        ), log_type='system')
+
 
     def add_inspection_record(self, type: str = 'manual') -> InspectionRecord:
         """执行一次点检并生成记录"""
@@ -171,6 +310,7 @@ class StateService:
         v_errors = []
         v_warnings = []
         temp_warnings = []
+        issues = []
         
         for line in self.state.lines:
             line_label = f"{line.id.replace('line', '')}#线体"
@@ -272,6 +412,31 @@ class StateService:
                         content=f"管理员{'启动' if value else '停止'}了{line_idx}#{polarity_zh}{chamber.name}的铟封程序",
                         level='info',
                     ), 'operation')
+                
+                # 特殊逻辑：如果是加热状态改变，记录操作日志
+                if key == 'isHeating' and old_val != value:
+                    line_idx = next((i + 1 for i, l in enumerate(self.state.lines) if l.id == line_id), "?")
+                    polarity_zh = "阳极" if any(c.id == chamber_id for c in line.anodeChambers) else "阴极"
+                    self._add_log(LogEntry(
+                        id=str(uuid.uuid4()),
+                        timestamp=time.time() * 1000,
+                        type='operation',
+                        content=f"管理员{'开启' if value else '关闭'}了{line_idx}#{polarity_zh}{chamber.name}的加热系统",
+                        level='info',
+                    ), 'operation')
+
+                # 特殊逻辑：如果是加热模式改变，记录操作日志
+                if key == 'heatingMode' and old_val != value:
+                    line_idx = next((i + 1 for i, l in enumerate(self.state.lines) if l.id == line_id), "?")
+                    polarity_zh = "阳极" if any(c.id == chamber_id for c in line.anodeChambers) else "阴极"
+                    mode_zh = {"off": "关闭", "manual": "手动", "program": "程序"}.get(value, value)
+                    self._add_log(LogEntry(
+                        id=str(uuid.uuid4()),
+                        timestamp=time.time() * 1000,
+                        type='operation',
+                        content=f"管理员将{line_idx}#{polarity_zh}{chamber.name}的加热模式切换为: {mode_zh}",
+                        level='info',
+                    ), 'operation')
 
         self._add_log(LogEntry(
             id=str(uuid.uuid4()),
@@ -293,6 +458,7 @@ class StateService:
             if hasattr(cart, key):
                 setattr(cart, key, value)
         
+        self._save_state()
         return cart
 
     def _find_chamber(self, chamber_id: str):
@@ -358,6 +524,9 @@ class StateService:
             level='success'
         ), 'system')
         return new_line
+
+    def get_line(self, line_id: str) -> Optional[LineData]:
+        return next((l for l in self.state.lines if l.id == line_id), None)
 
     def update_line(self, line_id: str, name: str, anode_chambers: list = None, cathode_chambers: list = None):
         line = next((l for l in self.state.lines if l.id == line_id), None)
@@ -645,9 +814,169 @@ class StateService:
         self._add_log(log, 'operation')
         return self.state
 
+    def create_cart_v2(self, line_id: str, polarity: str, chamber_id: str = None, mes_data: dict = None, operator_name: str = "Admin", operator_role: str = "admin"):
+        """
+        创建新小车（进样）- 自动查找入口腔体
+        :param line_id: 线体 ID
+        :param polarity: 阴阳极类型 ('anode' 或 'cathode')
+        :param chamber_id: 可选的腔体 ID，如未提供则自动查找入口
+        :param mes_data: MES 数据（包含 recipeId）
+        :return: 新创建的小车对象
+        """
+        mes_data = mes_data or {}
+        
+        # 1. 查找线体
+        line = next((l for l in self.state.lines if l.id == line_id), None)
+        if not line:
+            raise ValueError(f'线体未找到: {line_id}')
+        
+        # 2. 根据阴阳极选择腔体列表
+        chambers = line.anodeChambers if polarity == 'anode' else line.cathodeChambers
+        if not chambers or len(chambers) == 0:
+            raise ValueError(f'线体 {line_id} 的{"阳极" if polarity == "anode" else "阴极"}没有任何腔体')
+        
+        # 3. 自动查找入口腔体（优先找 load_lock 类型，否则使用第一个腔体）
+        if chamber_id:
+            # 如果指定了腔体 ID，验证其存在
+            chamber = next((c for c in chambers if c.id == chamber_id), None)
+            if not chamber:
+                raise ValueError(f'指定的腔体未找到: {chamber_id}')
+        else:
+            # 自动查找入口：优先找 type='load_lock' 的腔体
+            chamber = next((c for c in chambers if c.type == 'load_lock'), None)
+            if not chamber:
+                # 降级：使用腔体列表的第一个作为入口
+                chamber = chambers[0]
+            chamber_id = chamber.id
+        
+        # 4. 检查入口腔体是否已有小车
+        if any(c.locationChamberId == chamber_id for c in self.state.carts):
+            raise ValueError(f'进样仓 ({chamber.name}) 已有小车，无法进样')
+        
+        # 5. 调用原有的创建逻辑
+        return self._create_cart_internal(line, chamber, polarity, mes_data, operator_name, operator_role)
+
+    def _create_cart_internal(self, line, chamber, chamber_type: str, mes_data: dict, operator_name: str, operator_role: str):
+        """内部方法：实际创建小车的逻辑"""
+        chamber_id = chamber.id
+        line_id = line.id
+        
+        # 获取或者使用默认配方
+        from app.services.recipe_service import get_recipe_service
+        recipe_service = get_recipe_service()
+        
+        recipe_id = mes_data.get('recipeId')
+        recipe = None
+        if recipe_id:
+            recipe = recipe_service.get_recipe(recipe_id)
+        
+        if not recipe:
+            recipe = recipe_service.get_default_recipe(chamber_type)
+            
+        if not recipe:
+            raise ValueError("无法找到适用的工艺配方")
+
+        # 计算下一个小车编号
+        prefix = 'A' if chamber_type == 'anode' else 'C'
+        existing_numbers = [
+            int(c.number.split('-')[1]) 
+            for c in self.state.carts 
+            if c.number.startswith(f"{prefix}-") and len(c.number.split('-')) > 1 and c.number.split('-')[1].isdigit()
+        ]
+        next_number = max(existing_numbers, default=0) + 1
+        
+        if mes_data.get('batchNo'):
+            cart_number = mes_data['batchNo']
+        else:
+            cart_number = f"{prefix}-{next_number:03d}"
+        
+        # 定义工艺流程
+        import datetime
+        from app.models import ProcessStep
+        now = datetime.datetime.now()
+        
+        def fmt_dur(hours: float):
+            h = int(hours)
+            m = int((hours - h) * 60)
+            return f"{h}h {m}m" if h > 0 else f"{m}m"
+
+        if chamber_type == 'anode':
+            bake_dur_str = fmt_dur(recipe.bakeDuration)
+            steps = [
+                ProcessStep(id='s1', name='进样', status='completed', startTime=(now - datetime.timedelta(minutes=5)).isoformat(), endTime=now.isoformat(), duration='5m', estimatedDuration='5m'),
+                ProcessStep(id='s2', name='烘烤工艺', status='active', startTime=now.isoformat(), estimatedDuration=bake_dur_str),
+                ProcessStep(id='s3', name='清刷工艺', status='pending', estimatedDuration='4h'),
+                ProcessStep(id='s4', name='对接工艺', status='pending', estimatedDuration='2h'),
+                ProcessStep(id='s5', name='铟封工艺', status='pending', estimatedDuration='3h'),
+                ProcessStep(id='s6', name='出样', status='pending', estimatedDuration='10m')
+            ]
+            current_task = "烘烤工艺"
+            next_task = "待清刷"
+            total_hours = 0.08 + recipe.bakeDuration + 4 + 2 + 3 + 0.16
+            mes_params = {
+                "eGunVoltage": 0.0, "eGunCurrent": 0.0, "indiumTemp": 25.0, "sealPressure": 0.0,
+                "temperature": 25.0, "vacuum": 1e-5, "targetTemp": recipe.bakeTargetTemp, "targetVacuum": 1e-6,
+                "batchNo": mes_data.get('batchNo', f"ANO-{now.strftime('%y%m%d')}-{next_number:03d}"),
+                "recipeVer": f"{recipe.name} ({recipe.version})", "loadTime": now.isoformat()
+            }
+        else:
+            bake_dur_str = fmt_dur(recipe.bakeDuration)
+            growth_dur_str = fmt_dur(recipe.growthDuration)
+            steps = [
+                ProcessStep(id='s1', name='进样', status='completed', startTime=(now - datetime.timedelta(minutes=5)).isoformat(), endTime=now.isoformat(), duration='5m', estimatedDuration='5m'),
+                ProcessStep(id='s2', name='烘烤工艺', status='active', startTime=now.isoformat(), estimatedDuration=bake_dur_str),
+                ProcessStep(id='s3', name='生长工艺', status='pending', estimatedDuration=growth_dur_str),
+                ProcessStep(id='s4', name='出样', status='pending', estimatedDuration='10m')
+            ]
+            current_task = "烘烤工艺"
+            next_task = "待生长"
+            total_hours = 0.08 + recipe.bakeDuration + recipe.growthDuration + 0.16
+            mes_params = {
+                "csCurrent": 0.0, "o2Pressure": 1e-7, "photoCurrent": 0.0, "growthProgress": 0.0,
+                "temperature": 25.0, "vacuum": 1e-7, "targetTemp": recipe.bakeTargetTemp, "targetVacuum": 1e-8,
+                "batchNo": mes_data.get('batchNo', f"CAT-{now.strftime('%y%m%d')}-{next_number:03d}"),
+                "recipeVer": f"{recipe.name} ({recipe.version})", "loadTime": now.isoformat()
+            }
+
+        total_time_str = fmt_dur(total_hours)
+        
+        new_cart = Cart(
+            id=f"cart-{uuid.uuid4().hex[:8]}",
+            number=cart_number,
+            status='normal',
+            locationChamberId=chamber_id,
+            content=mes_data.get('materialCode', '未指定物料'),
+            recipeId=recipe.id,
+            currentTask=current_task,
+            nextTask=next_task,
+            progress=0.0,
+            totalTime=total_time_str,
+            remainingTime=total_time_str,
+            steps=steps,
+            **mes_params
+        )
+        
+        self.state.carts.append(new_cart)
+        
+        line_index = next((i + 1 for i, l in enumerate(self.state.lines) if l.id == line_id), "?")
+        role_map = {"admin": "管理员", "operator": "操作员", "observer": "观察员"}
+        role_zh = role_map.get(operator_role, "员工")
+        cart_type_name = "阳极" if chamber_type == 'anode' else "阴极"
+        
+        log = LogEntry(
+            id=str(uuid.uuid4()),
+            timestamp=time.time() * 1000,
+            type='operation',
+            content=f"{role_zh}{operator_name}在{line_index}#{cart_type_name}{chamber.name}完成了进样(小车{cart_number})",
+            level='success',
+        )
+        self._add_log(log, 'operation')
+        
+        return new_cart
+
     def create_cart(self, line_id: str, chamber_id: str, mes_data: dict, operator_name: str = "Admin", operator_role: str = "admin"):
         """
-        创建新小车（进样）
+        创建新小车（进样）- 旧版兼容接口
         :param line_id: 线体 ID
         :param chamber_id: 进样仓 ID
         :param mes_data: MES 数据（包含 recipeId）
@@ -679,18 +1008,19 @@ class StateService:
             # 最后的降级方案（理论上不应发生，因为已初始化默认值）
             raise ValueError("无法找到适用的工艺配方")
 
+        # 计算下一个小车编号（无论是否使用 batchNo 都需要，用于备选）
+        prefix = 'A' if chamber_type == 'anode' else 'C'
+        existing_numbers = [
+            int(c.number.split('-')[1]) 
+            for c in self.state.carts 
+            if c.number.startswith(f"{prefix}-") and len(c.number.split('-')) > 1 and c.number.split('-')[1].isdigit()
+        ]
+        next_number = max(existing_numbers, default=0) + 1
+        
         # 生成小车编号：优先使用前端传来的进样批次号(batchNo)，否则自动生成
         if mes_data.get('batchNo'):
             cart_number = mes_data['batchNo']
         else:
-            # 降级方案：自动生成编号
-            prefix = 'A' if chamber_type == 'anode' else 'C'
-            existing_numbers = [
-                int(c.number.split('-')[1]) 
-                for c in self.state.carts 
-                if c.number.startswith(f"{prefix}-") and len(c.number.split('-')) > 1 and c.number.split('-')[1].isdigit()
-            ]
-            next_number = max(existing_numbers, default=0) + 1
             cart_number = f"{prefix}-{next_number:03d}"
         
         # 定义工艺流程 (基于配方)

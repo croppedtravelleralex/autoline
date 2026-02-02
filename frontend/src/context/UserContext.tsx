@@ -68,9 +68,25 @@ export function UserProvider({ children }: { children: ReactNode }) {
         };
         setUser(userData);
         localStorage.setItem('user', JSON.stringify(userData));
+
+        // 调用后端专用接口记录登录日志
+        fetch(`${API_BASE}/login-log`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username, action: 'login' })
+        }).catch(() => {
+            // 静默失败，不影响登录流程
+        });
     };
 
     const logout = () => {
+        if (user) {
+            fetch(`${API_BASE}/logout`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username: user.username })
+            }).catch(console.error); // Fire and forget
+        }
         setUser(null);
         localStorage.removeItem('user');
     };
